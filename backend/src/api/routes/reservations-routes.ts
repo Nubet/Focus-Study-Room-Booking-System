@@ -3,28 +3,11 @@ import { CancelReservationUseCase } from "../../application/use-cases/cancel-res
 import { CreateReservationUseCase } from "../../application/use-cases/create-reservation.use-case.js";
 import { ListMyReservationsUseCase } from "../../application/use-cases/list-my-reservations.use-case.js";
 import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
-
-type CreateReservationBody = {
-  id: string;
-  roomId: string;
-  userId: string;
-  startTime: string;
-  endTime: string;
-};
-
-const isInvalidDate = (value: string): boolean => Number.isNaN(new Date(value).getTime());
-
-const isCreateReservationBody = (body: Partial<CreateReservationBody>): body is CreateReservationBody => {
-  return (
-    typeof body.id !== "string" ||
-    typeof body.roomId !== "string" ||
-    typeof body.userId !== "string" ||
-    typeof body.startTime !== "string" ||
-    typeof body.endTime !== "string"
-  )
-    ? false
-    : true;
-};
+import {
+  CreateReservationBody,
+  isCreateReservationBody,
+  isInvalidDate
+} from "./reservations-payload.js";
 
 export const registerReservationsRoutes = (app: FastifyInstance): void => {
   const reservationRepository = new InMemoryReservationRepository();
