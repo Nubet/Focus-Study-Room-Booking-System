@@ -28,4 +28,10 @@ export class InMemoryReservationRepository {
   async findByUserId(userId: string): Promise<Reservation[]> {
     return Array.from(this.items.values()).filter((item) => item.userId === userId);
   }
+
+  async findByTimeRange(startTime: Date, endTime: Date): Promise<Reservation[]> {
+    return Array.from(this.items.values()).filter(
+      (item) => item.status === "ACTIVE" && item.startTime < endTime && item.endTime > startTime
+    );
+  }
 }

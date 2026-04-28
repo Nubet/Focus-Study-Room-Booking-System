@@ -9,8 +9,10 @@ import {
   isInvalidDate
 } from "./reservations-payload.js";
 
-export const registerReservationsRoutes = (app: FastifyInstance): void => {
-  const reservationRepository = new InMemoryReservationRepository();
+export const registerReservationsRoutes = (
+  app: FastifyInstance,
+  reservationRepository: InMemoryReservationRepository
+): void => {
   const createReservationUseCase = new CreateReservationUseCase(reservationRepository);
   const cancelReservationUseCase = new CancelReservationUseCase(reservationRepository);
   const listMyReservationsUseCase = new ListMyReservationsUseCase(reservationRepository);
