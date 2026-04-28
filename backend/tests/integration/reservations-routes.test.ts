@@ -160,4 +160,32 @@ describe("reservations routes", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ id: "res-606", status: "CANCELLED" });
   });
+
+  it("returns 404 when cancelling already cancelled reservation", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-607",
+        roomId: "room-d",
+        userId: "user-3",
+        startTime: "2026-05-10T16:00:00.000Z",
+        endTime: "2026-05-10T17:00:00.000Z"
+      }
+    });
+
+    await app.inject({
+      method: "DELETE",
+      url: "/reservations/res-607"
+    });
+
+    const secondResponse = await app.inject({
+      method: "DELETE",
+      url: "/reservations/res-607"
+    });
+
+    expect(secondResponse.statusCode).toBe(404);
+  });
 });
