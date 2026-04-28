@@ -1,0 +1,35 @@
+export type ReservationStatus = "ACTIVE" | "CANCELLED" | "COMPLETED";
+
+type CreateReservationInput = {
+  id: string;
+  roomId: string;
+  userId: string;
+  startTime: Date;
+  endTime: Date;
+};
+
+export class Reservation {
+  readonly id: string;
+  readonly roomId: string;
+  readonly userId: string;
+  readonly startTime: Date;
+  readonly endTime: Date;
+  readonly status: ReservationStatus;
+
+  private constructor(input: CreateReservationInput) {
+    this.id = input.id;
+    this.roomId = input.roomId;
+    this.userId = input.userId;
+    this.startTime = input.startTime;
+    this.endTime = input.endTime;
+    this.status = "ACTIVE";
+  }
+
+  static create(input: CreateReservationInput): Reservation {
+    if (input.startTime >= input.endTime) {
+      throw new Error("startTime must be before endTime");
+    }
+
+    return new Reservation(input);
+  }
+}
