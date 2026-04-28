@@ -1,4 +1,6 @@
 import Fastify from "fastify";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import { registerRoomsRoutes } from "./api/routes/rooms-routes.js";
 import { registerReservationsRoutes } from "./api/routes/reservations-routes.js";
 import { InMemoryReservationRepository } from "./infrastructure/repositories/in-memory-reservation-repository.js";
@@ -8,6 +10,19 @@ export const buildApp = () => {
   const app = Fastify();
   const reservationRepository = new InMemoryReservationRepository();
   const roomRepository = new InMemoryRoomRepository();
+
+  app.register(swagger, {
+    openapi: {
+      info: {
+        title: "Focus Study Room Booking API",
+        version: "0.1.0"
+      }
+    }
+  });
+
+  app.register(swaggerUi, {
+    routePrefix: "/docs"
+  });
 
   app.get("/health", async () => ({ status: "ok" }));
   registerReservationsRoutes(app, reservationRepository);
