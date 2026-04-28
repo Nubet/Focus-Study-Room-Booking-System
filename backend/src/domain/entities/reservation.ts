@@ -14,7 +14,7 @@ export class Reservation {
   readonly userId: string;
   readonly startTime: Date;
   readonly endTime: Date;
-  readonly status: ReservationStatus;
+  status: ReservationStatus;
 
   private constructor(input: CreateReservationInput) {
     this.id = input.id;
@@ -31,5 +31,9 @@ export class Reservation {
     }
 
     return new Reservation(input);
+  }
+
+  cancel(): void {
+    this.status = "CANCELLED";
   }
 }
