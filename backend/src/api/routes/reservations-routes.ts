@@ -9,7 +9,10 @@ import {
   isCreateReservationBody,
   isInvalidDate
 } from "./reservations-payload.js";
-import { InvalidPayloadError } from "../../domain/errors/reservation-errors.js";
+import {
+  InvalidPayloadError,
+  InvalidQueryError
+} from "../../domain/errors/reservation-errors.js";
 
 export const registerReservationsRoutes = (
   app: FastifyInstance,
@@ -107,7 +110,7 @@ export const registerReservationsRoutes = (
           type: "object",
           required: ["userId"],
           properties: {
-            userId: { type: "string" }
+            userId: { type: "string", minLength: 1 }
           }
         },
         response: {
@@ -124,13 +127,37 @@ export const registerReservationsRoutes = (
                 status: { type: "string", enum: ["ACTIVE", "CANCELLED", "COMPLETED"] }
               }
             }
+          },
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          500: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
           }
         }
       }
     },
-    async (request) => {
+    async (request, reply) => {
       const query = request.query as { userId: string };
-      return listMyReservationsUseCase.execute({ userId: query.userId });
+
+      try {
+        if (query.userId.trim().length === 0) {
+          throw new InvalidQueryError();
+        }
+
+        return listMyReservationsUseCase.execute({ userId: query.userId });
+      } catch (error) {
+        const mapped = mapErrorToResponse(error);
+        return reply
+          .status(mapped.statusCode as 200 | 400 | 500)
+          .send({ message: mapped.message });
+      }
     }
   );
 
