@@ -31,9 +31,9 @@ export const registerReservationsRoutes = (
           type: "object",
           required: ["id", "roomId", "userId", "startTime", "endTime"],
           properties: {
-            id: { type: "string" },
-            roomId: { type: "string" },
-            userId: { type: "string" },
+            id: { type: "string", minLength: 1 },
+            roomId: { type: "string", minLength: 1 },
+            userId: { type: "string", minLength: 1 },
             startTime: { type: "string", format: "date-time" },
             endTime: { type: "string", format: "date-time" }
           }
@@ -76,6 +76,10 @@ export const registerReservationsRoutes = (
 
     try {
       if (!isCreateReservationBody(body)) {
+        throw new InvalidPayloadError();
+      }
+
+      if (!isNonEmptyString(body.id) || !isNonEmptyString(body.roomId) || !isNonEmptyString(body.userId)) {
         throw new InvalidPayloadError();
       }
 
