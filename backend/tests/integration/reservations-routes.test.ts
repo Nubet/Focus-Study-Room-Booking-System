@@ -73,7 +73,7 @@ describe("reservations routes", () => {
     expect(response.statusCode).toBe(201);
     expect(response.json()).toMatchObject({
       id: "res-601",
-      status: "ACTIVE"
+      status: "RESERVED"
     });
   });
 

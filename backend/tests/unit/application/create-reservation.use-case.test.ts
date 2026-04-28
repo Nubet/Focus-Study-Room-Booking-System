@@ -40,7 +40,7 @@ describe("CreateReservationUseCase", () => {
       endTime: new Date("2026-05-10T11:00:00.000Z")
     });
 
-    expect(result.status).toBe("ACTIVE");
+    expect(result.status).toBe("RESERVED");
     expect(result.id).toBe("res-101");
   });
 

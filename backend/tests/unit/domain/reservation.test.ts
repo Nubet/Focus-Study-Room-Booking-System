@@ -11,7 +11,23 @@ describe("Reservation", () => {
       endTime: new Date("2026-05-10T11:00:00.000Z")
     });
 
-    expect(reservation.status).toBe("ACTIVE");
+    expect(reservation.status).toBe("RESERVED");
+  });
+
+  it("supports lifecycle status transitions", () => {
+    const reservation = Reservation.create({
+      id: "res-4",
+      roomId: "room-a",
+      userId: "user-1",
+      startTime: new Date("2026-05-10T10:00:00.000Z"),
+      endTime: new Date("2026-05-10T11:00:00.000Z")
+    });
+
+    reservation.markOccupied();
+    expect(reservation.status).toBe("OCCUPIED");
+
+    reservation.markCompleted();
+    expect(reservation.status).toBe("COMPLETED");
   });
 
   it("throws when start is equal to end", () => {

@@ -3,6 +3,10 @@ import { Reservation } from "../../domain/entities/reservation.js";
 export class InMemoryReservationRepository {
   private readonly items = new Map<string, Reservation>();
 
+  private isBlockingStatus(status: Reservation["status"]): boolean {
+    return status === "RESERVED" || status === "OCCUPIED";
+  }
+
   async save(reservation: Reservation): Promise<void> {
     this.items.set(reservation.id, reservation);
   }
@@ -15,7 +19,7 @@ export class InMemoryReservationRepository {
     return Array.from(this.items.values()).filter(
       (item) =>
         item.roomId === roomId &&
-        item.status === "ACTIVE" &&
+        this.isBlockingStatus(item.status) &&
         item.startTime < endTime &&
         item.endTime > startTime
     );
@@ -31,7 +35,8 @@ export class InMemoryReservationRepository {
 
   async findByTimeRange(startTime: Date, endTime: Date): Promise<Reservation[]> {
     return Array.from(this.items.values()).filter(
-      (item) => item.status === "ACTIVE" && item.startTime < endTime && item.endTime > startTime
+      (item) =>
+        this.isBlockingStatus(item.status) && item.startTime < endTime && item.endTime > startTime
     );
   }
 }

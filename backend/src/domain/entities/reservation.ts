@@ -1,6 +1,11 @@
 import { InvalidReservationTimeError } from "../errors/reservation-errors.js";
 
-export type ReservationStatus = "ACTIVE" | "CANCELLED" | "COMPLETED";
+export type ReservationStatus =
+  | "RESERVED"
+  | "OCCUPIED"
+  | "NO_SHOW_RELEASED"
+  | "CANCELLED"
+  | "COMPLETED";
 
 type CreateReservationInput = {
   id: string;
@@ -24,7 +29,7 @@ export class Reservation {
     this.userId = input.userId;
     this.startTime = input.startTime;
     this.endTime = input.endTime;
-    this.status = "ACTIVE";
+    this.status = "RESERVED";
   }
 
   static create(input: CreateReservationInput): Reservation {
@@ -37,5 +42,17 @@ export class Reservation {
 
   cancel(): void {
     this.status = "CANCELLED";
+  }
+
+  markOccupied(): void {
+    this.status = "OCCUPIED";
+  }
+
+  markNoShowReleased(): void {
+    this.status = "NO_SHOW_RELEASED";
+  }
+
+  markCompleted(): void {
+    this.status = "COMPLETED";
   }
 }

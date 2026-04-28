@@ -47,7 +47,10 @@ export const registerReservationsRoutes = (
               userId: { type: "string" },
               startTime: { type: "string", format: "date-time" },
               endTime: { type: "string", format: "date-time" },
-              status: { type: "string", enum: ["ACTIVE", "CANCELLED", "COMPLETED"] }
+              status: {
+                type: "string",
+                enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
+              }
             }
           },
           400: {
@@ -128,7 +131,10 @@ export const registerReservationsRoutes = (
                 userId: { type: "string" },
                 startTime: { type: "string", format: "date-time" },
                 endTime: { type: "string", format: "date-time" },
-                status: { type: "string", enum: ["ACTIVE", "CANCELLED", "COMPLETED"] }
+                status: {
+                  type: "string",
+                  enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
+                }
               }
             }
           },
@@ -186,7 +192,10 @@ export const registerReservationsRoutes = (
               userId: { type: "string" },
               startTime: { type: "string", format: "date-time" },
               endTime: { type: "string", format: "date-time" },
-              status: { type: "string", enum: ["ACTIVE", "CANCELLED", "COMPLETED"] }
+              status: {
+                type: "string",
+                enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
+              }
             }
           },
           404: {
