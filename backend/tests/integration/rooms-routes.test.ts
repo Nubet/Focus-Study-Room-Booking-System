@@ -36,4 +36,15 @@ describe("rooms routes", () => {
 
     expect(response.statusCode).toBe(400);
   });
+
+  it("returns 400 when startTime is equal to endTime", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/rooms/available?startTime=2026-05-10T11:30:00.000Z&endTime=2026-05-10T11:30:00.000Z"
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
 });
