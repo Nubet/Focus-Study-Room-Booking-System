@@ -24,9 +24,28 @@ export const buildApp = () => {
     routePrefix: "/docs"
   });
 
-  app.get("/health", async () => ({ status: "ok" }));
-  registerReservationsRoutes(app, reservationRepository);
-  registerRoomsRoutes(app, roomRepository, reservationRepository);
+  app.register(async (instance) => {
+    instance.get(
+      "/health",
+      {
+        schema: {
+          tags: ["system"],
+          response: {
+            200: {
+              type: "object",
+              properties: {
+                status: { type: "string" }
+              }
+            }
+          }
+        }
+      },
+      async () => ({ status: "ok" })
+    );
+
+    registerReservationsRoutes(instance, reservationRepository);
+    registerRoomsRoutes(instance, roomRepository, reservationRepository);
+  });
 
   return app;
 };

@@ -16,27 +16,68 @@ export const registerRoomsRoutes = (
     reservationRepository
   );
 
-  app.get("/rooms/available", async (request, reply) => {
-    const query = request.query as { startTime?: string; endTime?: string };
-
-    try {
-      if (typeof query.startTime !== "string" || typeof query.endTime !== "string") {
-        throw new InvalidQueryError();
+  app.get(
+    "/rooms/available",
+    {
+      schema: {
+        tags: ["rooms"],
+        querystring: {
+          type: "object",
+          required: ["startTime", "endTime"],
+          properties: {
+            startTime: { type: "string", format: "date-time" },
+            endTime: { type: "string", format: "date-time" }
+          }
+        },
+        response: {
+          200: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" }
+              }
+            }
+          },
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          500: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          }
+        }
       }
+    },
+    async (request, reply) => {
+      const query = request.query as { startTime?: string; endTime?: string };
 
-      if (isInvalidDate(query.startTime) || isInvalidDate(query.endTime)) {
-        throw new InvalidQueryError();
+      try {
+        if (typeof query.startTime !== "string" || typeof query.endTime !== "string") {
+          throw new InvalidQueryError();
+        }
+
+        if (isInvalidDate(query.startTime) || isInvalidDate(query.endTime)) {
+          throw new InvalidQueryError();
+        }
+
+        const rooms = await listAvailableRoomsUseCase.execute({
+          startTime: new Date(query.startTime),
+          endTime: new Date(query.endTime)
+        });
+
+        return reply.status(200).send(rooms);
+      } catch (error) {
+        const mapped = mapErrorToResponse(error);
+        return reply
+          .status(mapped.statusCode as 200 | 400 | 500)
+          .send({ message: mapped.message });
       }
-
-      const rooms = await listAvailableRoomsUseCase.execute({
-        startTime: new Date(query.startTime),
-        endTime: new Date(query.endTime)
-      });
-
-      return reply.status(200).send(rooms);
-    } catch (error) {
-      const mapped = mapErrorToResponse(error);
-      return reply.status(mapped.statusCode).send({ message: mapped.message });
     }
-  });
+  );
 };

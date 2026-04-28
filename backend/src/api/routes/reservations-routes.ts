@@ -19,7 +19,56 @@ export const registerReservationsRoutes = (
   const cancelReservationUseCase = new CancelReservationUseCase(reservationRepository);
   const listMyReservationsUseCase = new ListMyReservationsUseCase(reservationRepository);
 
-  app.post("/reservations", async (request, reply) => {
+  app.post(
+    "/reservations",
+    {
+      schema: {
+        tags: ["reservations"],
+        body: {
+          type: "object",
+          required: ["id", "roomId", "userId", "startTime", "endTime"],
+          properties: {
+            id: { type: "string" },
+            roomId: { type: "string" },
+            userId: { type: "string" },
+            startTime: { type: "string", format: "date-time" },
+            endTime: { type: "string", format: "date-time" }
+          }
+        },
+        response: {
+          201: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              roomId: { type: "string" },
+              userId: { type: "string" },
+              startTime: { type: "string", format: "date-time" },
+              endTime: { type: "string", format: "date-time" },
+              status: { type: "string", enum: ["ACTIVE", "CANCELLED", "COMPLETED"] }
+            }
+          },
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          409: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          500: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          }
+        }
+      }
+    },
+    async (request, reply) => {
     const body = request.body as Partial<CreateReservationBody>;
 
     try {
@@ -42,16 +91,89 @@ export const registerReservationsRoutes = (
       return reply.status(201).send(reservation);
     } catch (error) {
       const mapped = mapErrorToResponse(error);
-      return reply.status(mapped.statusCode).send({ message: mapped.message });
+      return reply
+        .status(mapped.statusCode as 201 | 400 | 409 | 500)
+        .send({ message: mapped.message });
     }
-  });
+    }
+  );
 
-  app.get("/reservations/me", async (request) => {
-    const query = request.query as { userId: string };
-    return listMyReservationsUseCase.execute({ userId: query.userId });
-  });
+  app.get(
+    "/reservations/me",
+    {
+      schema: {
+        tags: ["reservations"],
+        querystring: {
+          type: "object",
+          required: ["userId"],
+          properties: {
+            userId: { type: "string" }
+          }
+        },
+        response: {
+          200: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                roomId: { type: "string" },
+                userId: { type: "string" },
+                startTime: { type: "string", format: "date-time" },
+                endTime: { type: "string", format: "date-time" },
+                status: { type: "string", enum: ["ACTIVE", "CANCELLED", "COMPLETED"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (request) => {
+      const query = request.query as { userId: string };
+      return listMyReservationsUseCase.execute({ userId: query.userId });
+    }
+  );
 
-  app.delete("/reservations/:id", async (request, reply) => {
+  app.delete(
+    "/reservations/:id",
+    {
+      schema: {
+        tags: ["reservations"],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string" }
+          }
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              roomId: { type: "string" },
+              userId: { type: "string" },
+              startTime: { type: "string", format: "date-time" },
+              endTime: { type: "string", format: "date-time" },
+              status: { type: "string", enum: ["ACTIVE", "CANCELLED", "COMPLETED"] }
+            }
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          500: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          }
+        }
+      }
+    },
+    async (request, reply) => {
     const params = request.params as { id: string };
 
     try {
@@ -62,7 +184,10 @@ export const registerReservationsRoutes = (
       return reply.status(200).send(reservation);
     } catch (error) {
       const mapped = mapErrorToResponse(error);
-      return reply.status(mapped.statusCode).send({ message: mapped.message });
+      return reply
+        .status(mapped.statusCode as 200 | 404 | 500)
+        .send({ message: mapped.message });
     }
-  });
+    }
+  );
 };
