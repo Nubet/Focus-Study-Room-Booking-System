@@ -66,9 +66,16 @@ export const registerRoomsRoutes = (
           throw new InvalidQueryError();
         }
 
+        const startTime = new Date(query.startTime);
+        const endTime = new Date(query.endTime);
+
+        if (startTime >= endTime) {
+          throw new InvalidQueryError();
+        }
+
         const rooms = await listAvailableRoomsUseCase.execute({
-          startTime: new Date(query.startTime),
-          endTime: new Date(query.endTime)
+          startTime,
+          endTime
         });
 
         return reply.status(200).send(rooms);
