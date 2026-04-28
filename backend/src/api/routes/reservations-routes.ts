@@ -2,12 +2,14 @@ import { FastifyInstance } from "fastify";
 import { CancelReservationUseCase } from "../../application/use-cases/cancel-reservation.use-case.js";
 import { CreateReservationUseCase } from "../../application/use-cases/create-reservation.use-case.js";
 import { ListMyReservationsUseCase } from "../../application/use-cases/list-my-reservations.use-case.js";
+import { mapErrorToResponse } from "../http/map-error-to-response.js";
 import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
 import {
   CreateReservationBody,
   isCreateReservationBody,
   isInvalidDate
 } from "./reservations-payload.js";
+import { InvalidPayloadError } from "../../domain/errors/reservation-errors.js";
 
 export const registerReservationsRoutes = (
   app: FastifyInstance,
@@ -20,15 +22,15 @@ export const registerReservationsRoutes = (
   app.post("/reservations", async (request, reply) => {
     const body = request.body as Partial<CreateReservationBody>;
 
-    if (!isCreateReservationBody(body)) {
-      return reply.status(400).send({ message: "Invalid payload" });
-    }
-
-    if (isInvalidDate(body.startTime) || isInvalidDate(body.endTime)) {
-      return reply.status(400).send({ message: "Invalid payload" });
-    }
-
     try {
+      if (!isCreateReservationBody(body)) {
+        throw new InvalidPayloadError();
+      }
+
+      if (isInvalidDate(body.startTime) || isInvalidDate(body.endTime)) {
+        throw new InvalidPayloadError();
+      }
+
       const reservation = await createReservationUseCase.execute({
         id: body.id,
         roomId: body.roomId,
@@ -39,13 +41,8 @@ export const registerReservationsRoutes = (
 
       return reply.status(201).send(reservation);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unexpected error";
-
-      if (message === "Slot already reserved") {
-        return reply.status(409).send({ message });
-      }
-
-      return reply.status(400).send({ message });
+      const mapped = mapErrorToResponse(error);
+      return reply.status(mapped.statusCode).send({ message: mapped.message });
     }
   });
 
@@ -64,13 +61,8 @@ export const registerReservationsRoutes = (
 
       return reply.status(200).send(reservation);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unexpected error";
-
-      if (message === "Reservation not found") {
-        return reply.status(404).send({ message });
-      }
-
-      return reply.status(400).send({ message });
+      const mapped = mapErrorToResponse(error);
+      return reply.status(mapped.statusCode).send({ message: mapped.message });
     }
   });
 };

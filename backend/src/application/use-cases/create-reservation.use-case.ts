@@ -1,4 +1,5 @@
 import { Reservation } from "../../domain/entities/reservation.js";
+import { SlotAlreadyReservedError } from "../../domain/errors/reservation-errors.js";
 
 type CreateReservationInput = {
   id: string;
@@ -28,7 +29,7 @@ export class CreateReservationUseCase {
     );
 
     if (conflictingReservations.length > 0) {
-      throw new Error("Slot already reserved");
+      throw new SlotAlreadyReservedError();
     }
 
     const reservation = Reservation.create(input);

@@ -1,3 +1,5 @@
+import { InvalidReservationTimeError } from "../errors/reservation-errors.js";
+
 export type ReservationStatus = "ACTIVE" | "CANCELLED" | "COMPLETED";
 
 type CreateReservationInput = {
@@ -27,7 +29,7 @@ export class Reservation {
 
   static create(input: CreateReservationInput): Reservation {
     if (input.startTime >= input.endTime) {
-      throw new Error("startTime must be before endTime");
+      throw new InvalidReservationTimeError();
     }
 
     return new Reservation(input);
