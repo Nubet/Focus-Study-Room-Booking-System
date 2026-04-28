@@ -20,6 +20,10 @@ export class CancelReservationUseCase {
       throw new ReservationNotFoundError();
     }
 
+    if (reservation.status === "CANCELLED") {
+      throw new ReservationNotFoundError();
+    }
+
     reservation.cancel();
     await this.reservationRepository.save(reservation);
 
