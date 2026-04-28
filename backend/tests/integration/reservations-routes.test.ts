@@ -2,6 +2,41 @@ import { describe, expect, it } from "vitest";
 import { buildApp } from "@src/app.js";
 
 describe("reservations routes", () => {
+  it("returns 400 when required fields are missing", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-600",
+        roomId: "room-a",
+        userId: "user-1",
+        startTime: "2026-05-10T10:00:00.000Z"
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("returns 400 when date fields are invalid", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-600b",
+        roomId: "room-a",
+        userId: "user-1",
+        startTime: "invalid-date",
+        endTime: "2026-05-10T11:00:00.000Z"
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it("creates reservation via POST /reservations", async () => {
     const app = buildApp();
 
