@@ -4,7 +4,7 @@ import { InvalidQueryError } from "../../domain/errors/reservation-errors.js";
 import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
 import { InMemoryRoomRepository } from "../../infrastructure/repositories/in-memory-room-repository.js";
 import { mapErrorToResponse } from "../http/map-error-to-response.js";
-import { isInvalidDate } from "./reservations-payload.js";
+import { isValidDateString } from "./query-validators.js";
 
 export const registerRoomsRoutes = (
   app: FastifyInstance,
@@ -58,11 +58,7 @@ export const registerRoomsRoutes = (
       const query = request.query as { startTime?: string; endTime?: string };
 
       try {
-        if (typeof query.startTime !== "string" || typeof query.endTime !== "string") {
-          throw new InvalidQueryError();
-        }
-
-        if (isInvalidDate(query.startTime) || isInvalidDate(query.endTime)) {
+        if (!isValidDateString(query.startTime) || !isValidDateString(query.endTime)) {
           throw new InvalidQueryError();
         }
 

@@ -6,9 +6,6 @@ export type CreateReservationBody = {
   endTime: string;
 };
 
-export const isInvalidDate = (value: string): boolean =>
-  Number.isNaN(new Date(value).getTime());
-
 export const isCreateReservationBody = (
   body: Partial<CreateReservationBody>
 ): body is CreateReservationBody => {

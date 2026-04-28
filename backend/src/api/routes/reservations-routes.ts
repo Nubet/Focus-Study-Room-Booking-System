@@ -6,9 +6,9 @@ import { mapErrorToResponse } from "../http/map-error-to-response.js";
 import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
 import {
   CreateReservationBody,
-  isCreateReservationBody,
-  isInvalidDate
+  isCreateReservationBody
 } from "./reservations-payload.js";
+import { isNonEmptyString, isValidDateString } from "./query-validators.js";
 import {
   InvalidPayloadError,
   InvalidQueryError
@@ -79,7 +79,7 @@ export const registerReservationsRoutes = (
         throw new InvalidPayloadError();
       }
 
-      if (isInvalidDate(body.startTime) || isInvalidDate(body.endTime)) {
+      if (!isValidDateString(body.startTime) || !isValidDateString(body.endTime)) {
         throw new InvalidPayloadError();
       }
 
@@ -147,7 +147,7 @@ export const registerReservationsRoutes = (
       const query = request.query as { userId: string };
 
       try {
-        if (query.userId.trim().length === 0) {
+        if (!isNonEmptyString(query.userId)) {
           throw new InvalidQueryError();
         }
 
