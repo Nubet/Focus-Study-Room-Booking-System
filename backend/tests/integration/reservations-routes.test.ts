@@ -126,6 +126,17 @@ describe("reservations routes", () => {
     expect(response.json()[0]).toMatchObject({ id: "res-604", userId: "user-7" });
   });
 
+  it("returns 400 when userId query is empty", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/reservations/me?userId="
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it("cancels reservation via DELETE /reservations/:id", async () => {
     const app = buildApp();
 
