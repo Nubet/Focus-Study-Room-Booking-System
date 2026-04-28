@@ -4,6 +4,28 @@ import { CreateReservationUseCase } from "../../application/use-cases/create-res
 import { ListMyReservationsUseCase } from "../../application/use-cases/list-my-reservations.use-case.js";
 import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
 
+type CreateReservationBody = {
+  id: string;
+  roomId: string;
+  userId: string;
+  startTime: string;
+  endTime: string;
+};
+
+const isInvalidDate = (value: string): boolean => Number.isNaN(new Date(value).getTime());
+
+const isCreateReservationBody = (body: Partial<CreateReservationBody>): body is CreateReservationBody => {
+  return (
+    typeof body.id !== "string" ||
+    typeof body.roomId !== "string" ||
+    typeof body.userId !== "string" ||
+    typeof body.startTime !== "string" ||
+    typeof body.endTime !== "string"
+  )
+    ? false
+    : true;
+};
+
 export const registerReservationsRoutes = (app: FastifyInstance): void => {
   const reservationRepository = new InMemoryReservationRepository();
   const createReservationUseCase = new CreateReservationUseCase(reservationRepository);
@@ -11,13 +33,15 @@ export const registerReservationsRoutes = (app: FastifyInstance): void => {
   const listMyReservationsUseCase = new ListMyReservationsUseCase(reservationRepository);
 
   app.post("/reservations", async (request, reply) => {
-    const body = request.body as {
-      id: string;
-      roomId: string;
-      userId: string;
-      startTime: string;
-      endTime: string;
-    };
+    const body = request.body as Partial<CreateReservationBody>;
+
+    if (!isCreateReservationBody(body)) {
+      return reply.status(400).send({ message: "Invalid payload" });
+    }
+
+    if (isInvalidDate(body.startTime) || isInvalidDate(body.endTime)) {
+      return reply.status(400).send({ message: "Invalid payload" });
+    }
 
     try {
       const reservation = await createReservationUseCase.execute({
