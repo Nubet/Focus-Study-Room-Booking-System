@@ -19,6 +19,24 @@ describe("reservations routes", () => {
     expect(response.statusCode).toBe(400);
   });
 
+  it("returns 400 when identifiers are empty", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "",
+        roomId: "",
+        userId: "",
+        startTime: "2026-05-10T10:00:00.000Z",
+        endTime: "2026-05-10T11:00:00.000Z"
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it("returns 400 when date fields are invalid", async () => {
     const app = buildApp();
 
