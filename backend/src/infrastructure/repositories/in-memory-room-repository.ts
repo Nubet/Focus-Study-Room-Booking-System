@@ -1,8 +1,7 @@
-type Room = {
-  id: string;
-};
 
-export class InMemoryRoomRepository {
+import { RoomRepository, Room } from "../../domain/repositories/room-repository.js";
+
+export class InMemoryRoomRepository implements RoomRepository {
   constructor(private readonly rooms: Room[] = [{ id: "room-a" }, { id: "room-b" }, { id: "room-c" }]) {}
 
   async findAll(): Promise<Room[]> {

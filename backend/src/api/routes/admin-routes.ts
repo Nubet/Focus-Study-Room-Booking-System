@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { ReservationStatus } from "../../domain/entities/reservation.js";
-import { InMemoryRoomRepository } from "../../infrastructure/repositories/in-memory-room-repository.js";
-import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
+import { RoomRepository } from "../../domain/repositories/room-repository.js";
+import { ReservationRepository } from "../../domain/repositories/reservation-repository.js";
 import { isNonEmptyString, isValidDateString } from "./query-validators.js";
 
 const isAdminRole = (value: unknown): boolean => value === "ADMIN";
@@ -35,8 +35,8 @@ const isAllowedReservationTransition = (
 
 export const registerAdminRoutes = (
   app: FastifyInstance,
-  roomRepository: InMemoryRoomRepository,
-  reservationRepository: InMemoryReservationRepository
+  roomRepository: RoomRepository,
+  reservationRepository: ReservationRepository
 ): void => {
   const preValidateAdmin = async (request: any, reply: any) => {
     if (!ensureAdmin(request.headers["x-role"])) {

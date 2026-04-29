@@ -4,7 +4,7 @@ import { CheckInReservationUseCase } from "../../application/use-cases/check-in-
 import { CreateReservationUseCase } from "../../application/use-cases/create-reservation.use-case.js";
 import { ListMyReservationsUseCase } from "../../application/use-cases/list-my-reservations.use-case.js";
 import { mapErrorToResponse } from "../http/map-error-to-response.js";
-import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
+import { ReservationRepository } from "../../domain/repositories/reservation-repository.js";
 import {
   CreateReservationBody,
   isCreateReservationBody
@@ -17,7 +17,7 @@ import {
 
 export const registerReservationsRoutes = (
   app: FastifyInstance,
-  reservationRepository: InMemoryReservationRepository
+  reservationRepository: ReservationRepository
 ): void => {
   const createReservationUseCase = new CreateReservationUseCase(reservationRepository);
   const cancelReservationUseCase = new CancelReservationUseCase(reservationRepository);

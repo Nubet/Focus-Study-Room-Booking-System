@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+    volumes:
+      - backend_data:/app/data
+
+volumes:
+  backend_data:

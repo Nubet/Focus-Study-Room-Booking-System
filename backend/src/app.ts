@@ -5,13 +5,16 @@ import swaggerUi from "@fastify/swagger-ui";
 import { registerAdminRoutes } from "./api/routes/admin-routes.js";
 import { registerRoomsRoutes } from "./api/routes/rooms-routes.js";
 import { registerReservationsRoutes } from "./api/routes/reservations-routes.js";
-import { InMemoryReservationRepository } from "./infrastructure/repositories/in-memory-reservation-repository.js";
+import { RoomRepository } from "./domain/repositories/room-repository.js";
+import { ReservationRepository } from "./domain/repositories/reservation-repository.js";
 import { InMemoryRoomRepository } from "./infrastructure/repositories/in-memory-room-repository.js";
+import { InMemoryReservationRepository } from "./infrastructure/repositories/in-memory-reservation-repository.js";
 
-export const buildApp = () => {
+export const buildApp = (
+  roomRepository: RoomRepository = new InMemoryRoomRepository(),
+  reservationRepository: ReservationRepository = new InMemoryReservationRepository()
+) => {
   const app = Fastify();
-  const reservationRepository = new InMemoryReservationRepository();
-  const roomRepository = new InMemoryRoomRepository();
 
   app.register(cors, {
     origin: true,
