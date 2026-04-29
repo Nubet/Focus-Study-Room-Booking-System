@@ -259,7 +259,8 @@ export const registerReservationsRoutes = (
             type: "object",
             properties: {
               reservationId: { type: "string" },
-              status: { type: "string", enum: ["OCCUPIED"] }
+              status: { type: "string", enum: ["OCCUPIED"] },
+              checkedInAt: { type: "string", format: "date-time" }
             }
           },
           400: {
@@ -321,7 +322,8 @@ export const registerReservationsRoutes = (
 
         return reply.status(200).send({
           reservationId: reservation.id,
-          status: reservation.status
+          status: reservation.status,
+          checkedInAt: reservation.checkedInAt?.toISOString()
         });
       } catch (error) {
         const mapped = mapErrorToResponse(error);

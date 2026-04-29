@@ -23,8 +23,9 @@ describe("Reservation", () => {
       endTime: new Date("2026-05-10T11:00:00.000Z")
     });
 
-    reservation.markOccupied();
+    reservation.markOccupied(new Date("2026-05-10T10:01:00.000Z"));
     expect(reservation.status).toBe("OCCUPIED");
+    expect(reservation.checkedInAt?.toISOString()).toBe("2026-05-10T10:01:00.000Z");
 
     reservation.markCompleted();
     expect(reservation.status).toBe("COMPLETED");

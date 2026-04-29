@@ -22,6 +22,7 @@ export class Reservation {
   readonly startTime: Date;
   readonly endTime: Date;
   status: ReservationStatus;
+  checkedInAt?: Date;
 
   private constructor(input: CreateReservationInput) {
     this.id = input.id;
@@ -44,8 +45,9 @@ export class Reservation {
     this.status = "CANCELLED";
   }
 
-  markOccupied(): void {
+  markOccupied(checkedInAt: Date): void {
     this.status = "OCCUPIED";
+    this.checkedInAt = checkedInAt;
   }
 
   markNoShowReleased(): void {

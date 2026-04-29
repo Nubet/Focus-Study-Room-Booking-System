@@ -64,7 +64,7 @@ export class CheckInReservationUseCase {
       }
     }
 
-    reservation.markOccupied();
+    reservation.markOccupied(now);
     await this.reservationRepository.save(reservation);
 
     return reservation;
