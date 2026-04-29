@@ -52,6 +52,7 @@ describe("check-in route", () => {
       reservationId: "res-801",
       status: "OCCUPIED"
     });
+    expect(typeof response.json().checkedInAt).toBe("string");
   });
 
   it("returns 404 when reservation does not exist", async () => {
@@ -226,6 +227,48 @@ describe("check-in route", () => {
         method: "QR",
         code: tamperedQrCode,
         userId: "user-5"
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("returns 403 for expired QR signed payload", async () => {
+    const app = buildApp();
+    const window = createActiveReservationWindow();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-809",
+        roomId: "room-g",
+        userId: "user-9",
+        startTime: window.startTime,
+        endTime: window.endTime
+      }
+    });
+
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const expiredQrCode = createSignedQrPayload(
+      {
+        type: "CHECK_IN_QR",
+        reservationId: "res-809",
+        userId: "user-9",
+        iat: nowInSeconds - 120,
+        exp: nowInSeconds - 60,
+        nonce: "nonce-expired"
+      },
+      "dev-qr-secret"
+    );
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations/res-809/check-in",
+      payload: {
+        method: "QR",
+        code: expiredQrCode,
+        userId: "user-9"
       }
     });
 
