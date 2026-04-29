@@ -81,8 +81,13 @@ export function RoomsPage({
     .filter((room) => {
       const [buildingCode] = room.id.split('-')
       if (roomsFilter.buildingCode !== 'ALL' && buildingCode !== roomsFilter.buildingCode) return false
-      const roomLabel = `${room.id} ${(buildingNameByCode.get(buildingCode) ?? '').toLowerCase()}`
-      if (roomsFilter.query && !roomLabel.toLowerCase().includes(roomsFilter.query.toLowerCase())) return false
+      if (roomsFilter.query) {
+        const query = roomsFilter.query.toLowerCase().trim()
+        const buildingName = (buildingNameByCode.get(buildingCode) ?? '').toLowerCase()
+        const isIdMatch = room.id.toLowerCase().startsWith(query)
+        const isNameMatch = buildingName.startsWith(query) || buildingName.includes(` ${query}`)
+        if (!isIdMatch && !isNameMatch) return false
+      }
       const isAvailable = availableSet.has(room.id)
       if (roomsFilter.status === 'AVAILABLE' && !isAvailable) return false
       if (roomsFilter.status === 'UNAVAILABLE' && isAvailable) return false
