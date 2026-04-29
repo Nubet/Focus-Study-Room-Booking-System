@@ -143,6 +143,23 @@ describe("admin access guard", () => {
     expect(response.statusCode).toBe(400);
   });
 
+  it("returns 409 when updating room id to existing id", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/admin/rooms/room-a",
+      headers: {
+        "x-role": "ADMIN"
+      },
+      payload: {
+        id: "room-b"
+      }
+    });
+
+    expect(response.statusCode).toBe(409);
+  });
+
   it("deletes room for admin role", async () => {
     const app = buildApp();
 
