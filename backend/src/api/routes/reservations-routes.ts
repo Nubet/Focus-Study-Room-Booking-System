@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { CancelReservationUseCase } from "../../application/use-cases/cancel-reservation.use-case.js";
+import { CheckInReservationUseCase } from "../../application/use-cases/check-in-reservation.use-case.js";
 import { CreateReservationUseCase } from "../../application/use-cases/create-reservation.use-case.js";
 import { ListMyReservationsUseCase } from "../../application/use-cases/list-my-reservations.use-case.js";
 import { mapErrorToResponse } from "../http/map-error-to-response.js";
@@ -20,6 +21,7 @@ export const registerReservationsRoutes = (
 ): void => {
   const createReservationUseCase = new CreateReservationUseCase(reservationRepository);
   const cancelReservationUseCase = new CancelReservationUseCase(reservationRepository);
+  const checkInReservationUseCase = new CheckInReservationUseCase(reservationRepository);
   const listMyReservationsUseCase = new ListMyReservationsUseCase(reservationRepository);
 
   app.post(
@@ -228,6 +230,105 @@ export const registerReservationsRoutes = (
         .status(mapped.statusCode as 200 | 404 | 500)
         .send({ message: mapped.message });
     }
+    }
+  );
+
+  app.post(
+    "/reservations/:id/check-in",
+    {
+      schema: {
+        tags: ["reservations"],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string" }
+          }
+        },
+        body: {
+          type: "object",
+          required: ["method", "code", "userId"],
+          properties: {
+            method: { type: "string", enum: ["PIN", "QR"] },
+            code: { type: "string", minLength: 1 },
+            userId: { type: "string", minLength: 1 }
+          }
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              reservationId: { type: "string" },
+              status: { type: "string", enum: ["OCCUPIED"] }
+            }
+          },
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          403: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          409: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          500: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          }
+        }
+      }
+    },
+    async (request, reply) => {
+      const params = request.params as { id?: string };
+      const body = request.body as { method?: string; code?: string; userId?: string };
+
+      try {
+        if (!isNonEmptyString(params.id)) {
+          throw new InvalidPayloadError();
+        }
+
+        if (!isNonEmptyString(body.code) || !isNonEmptyString(body.userId)) {
+          throw new InvalidPayloadError();
+        }
+
+        if (body.method !== "PIN" && body.method !== "QR") {
+          throw new InvalidPayloadError();
+        }
+
+        const reservation = await checkInReservationUseCase.execute({
+          reservationId: params.id,
+          method: body.method,
+          code: body.code,
+          userId: body.userId
+        });
+
+        return reply.status(200).send({
+          reservationId: reservation.id,
+          status: reservation.status
+        });
+      } catch (error) {
+        const mapped = mapErrorToResponse(error);
+        return reply
+          .status(mapped.statusCode as 200 | 400 | 403 | 404 | 409 | 500)
+          .send({ message: mapped.message });
+      }
     }
   );
 };

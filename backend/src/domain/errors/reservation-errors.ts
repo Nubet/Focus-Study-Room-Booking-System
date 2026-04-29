@@ -27,3 +27,15 @@ export class InvalidQueryError extends Error {
     super("Invalid query");
   }
 }
+
+export class InvalidAccessCodeError extends Error {
+  constructor() {
+    super("Invalid access code");
+  }
+}
+
+export class ReservationStateConflictError extends Error {
+  constructor() {
+    super("Reservation state conflict");
+  }
+}
