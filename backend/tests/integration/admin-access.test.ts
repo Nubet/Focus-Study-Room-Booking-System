@@ -330,4 +330,44 @@ describe("admin access guard", () => {
 
     expect(response.statusCode).toBe(400);
   });
+
+  it("returns 409 for invalid reservation status transition", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-7",
+        roomId: "room-b",
+        userId: "user-g",
+        startTime: "2026-05-10T18:00:00.000Z",
+        endTime: "2026-05-10T19:00:00.000Z"
+      }
+    });
+
+    await app.inject({
+      method: "PATCH",
+      url: "/admin/reservations/res-admin-7/status",
+      headers: {
+        "x-role": "ADMIN"
+      },
+      payload: {
+        status: "CANCELLED"
+      }
+    });
+
+    const invalidTransitionResponse = await app.inject({
+      method: "PATCH",
+      url: "/admin/reservations/res-admin-7/status",
+      headers: {
+        "x-role": "ADMIN"
+      },
+      payload: {
+        status: "RESERVED"
+      }
+    });
+
+    expect(invalidTransitionResponse.statusCode).toBe(409);
+  });
 });
