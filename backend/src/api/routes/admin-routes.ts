@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import { ReservationStatus } from "../../domain/entities/reservation.js";
 import { InMemoryRoomRepository } from "../../infrastructure/repositories/in-memory-room-repository.js";
 import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
 import { isNonEmptyString } from "./query-validators.js";
@@ -6,6 +7,16 @@ import { isNonEmptyString } from "./query-validators.js";
 const isAdminRole = (value: unknown): boolean => value === "ADMIN";
 
 const ensureAdmin = (role: unknown): boolean => isAdminRole(role);
+
+const isReservationStatus = (value: unknown): value is ReservationStatus => {
+  return (
+    value === "RESERVED" ||
+    value === "OCCUPIED" ||
+    value === "NO_SHOW_RELEASED" ||
+    value === "CANCELLED" ||
+    value === "COMPLETED"
+  );
+};
 
 export const registerAdminRoutes = (
   app: FastifyInstance,
@@ -286,6 +297,86 @@ export const registerAdminRoutes = (
 
       const reservations = await reservationRepository.findAll({ status: query.status });
       return reply.status(200).send(reservations);
+    }
+  );
+
+  app.patch(
+    "/admin/reservations/:id/status",
+    {
+      schema: {
+        tags: ["admin"],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string" }
+          }
+        },
+        body: {
+          type: "object",
+          required: ["status"],
+          properties: {
+            status: {
+              type: "string",
+              enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
+            }
+          }
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              status: {
+                type: "string",
+                enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
+              }
+            }
+          },
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          403: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          }
+        }
+      }
+    },
+    async (request, reply) => {
+      const role = request.headers["x-role"];
+      const params = request.params as { id?: string };
+      const body = request.body as { status?: string };
+
+      if (!ensureAdmin(role)) {
+        return reply.status(403).send({ message: "Forbidden" });
+      }
+
+      if (!isNonEmptyString(params.id) || !isReservationStatus(body.status)) {
+        return reply.status(400).send({ message: "Invalid payload" });
+      }
+
+      const reservation = await reservationRepository.findById(params.id);
+
+      if (!reservation) {
+        return reply.status(404).send({ message: "Reservation not found" });
+      }
+
+      reservation.status = body.status;
+      await reservationRepository.save(reservation);
+
+      return reply.status(200).send({ id: reservation.id, status: reservation.status });
     }
   );
 };
