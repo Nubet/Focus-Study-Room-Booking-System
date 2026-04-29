@@ -1,13 +1,14 @@
 export type CampusBuilding = {
-  code: string
-  name: string
+    code: string
+    name: string
 }
 
 export const plCampusBuildings: CampusBuilding[] = [
-  { code: 'A1', name: 'Main Building A1' },
-  { code: 'A2', name: 'Main Building A2' },
-  { code: 'B1', name: 'Engineering Building B1' },
-  { code: 'B2', name: 'Engineering Building B2' },
-  { code: 'C1', name: 'Science Building C1' },
-  { code: 'C2', name: 'Science Building C2' }
+    {code: 'A2', name: 'Faculty of Biotechnology and Food Sciences'},
+    {code: 'A16', name: 'International Faculty of Engineering'},
+    {code: 'A18', name: 'Engineers Factory XXI'},
+    {code: 'A19', name: 'Faculty of Mechanical Engineering'},
+    {code: 'B18', name: 'Department of Microelectronics and Information Technology'},
+    {code: 'B19', name: 'Information Technology Centre'}
 ]
+
