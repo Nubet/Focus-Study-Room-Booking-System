@@ -468,4 +468,39 @@ describe("admin access guard", () => {
 
     expect(invalidTransitionResponse.statusCode).toBe(409);
   });
+
+  it("returns 403 for non-admin on write endpoints even with invalid payload", async () => {
+    const app = buildApp();
+
+    const createRoomResponse = await app.inject({
+      method: "POST",
+      url: "/admin/rooms",
+      headers: {
+        "x-role": "STUDENT"
+      },
+      payload: {}
+    });
+
+    const updateRoomResponse = await app.inject({
+      method: "PATCH",
+      url: "/admin/rooms/room-a",
+      headers: {
+        "x-role": "STUDENT"
+      },
+      payload: {}
+    });
+
+    const updateReservationStatusResponse = await app.inject({
+      method: "PATCH",
+      url: "/admin/reservations/res-any/status",
+      headers: {
+        "x-role": "STUDENT"
+      },
+      payload: {}
+    });
+
+    expect(createRoomResponse.statusCode).toBe(403);
+    expect(updateRoomResponse.statusCode).toBe(403);
+    expect(updateReservationStatusResponse.statusCode).toBe(403);
+  });
 });
