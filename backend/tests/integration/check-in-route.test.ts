@@ -218,4 +218,32 @@ describe("check-in route", () => {
 
     expect(response.statusCode).toBe(403);
   });
+
+  it("returns 403 when check-in is outside allowed time window", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-806",
+        roomId: "room-f",
+        userId: "user-6",
+        startTime: "2020-05-10T10:00:00.000Z",
+        endTime: "2020-05-10T11:00:00.000Z"
+      }
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations/res-806/check-in",
+      payload: {
+        method: "PIN",
+        code: "123456",
+        userId: "user-6"
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
 });

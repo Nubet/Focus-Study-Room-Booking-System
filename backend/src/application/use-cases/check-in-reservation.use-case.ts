@@ -4,6 +4,7 @@ import {
   ReservationNotFoundError,
   ReservationStateConflictError
 } from "../../domain/errors/reservation-errors.js";
+import { verifySignedQrPayload } from "../security/qr-signed-payload-verifier.js";
 
 type CheckInMethod = "PIN" | "QR";
 
@@ -41,8 +42,18 @@ export class CheckInReservationUseCase {
       throw new InvalidAccessCodeError();
     }
 
-    if (input.method === "QR" && input.code !== "signed-qr-payload") {
-      throw new InvalidAccessCodeError();
+    if (input.method === "QR") {
+      const secret = process.env.QR_SIGNING_SECRET ?? "dev-qr-secret";
+      const isValid = verifySignedQrPayload({
+        code: input.code,
+        reservationId: reservation.id,
+        userId: input.userId,
+        secret
+      });
+
+      if (!isValid) {
+        throw new InvalidAccessCodeError();
+      }
     }
 
     reservation.markOccupied();
