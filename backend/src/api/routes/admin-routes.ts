@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { ReservationStatus } from "../../domain/entities/reservation.js";
 import { InMemoryRoomRepository } from "../../infrastructure/repositories/in-memory-room-repository.js";
 import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
-import { isNonEmptyString } from "./query-validators.js";
+import { isNonEmptyString, isValidDateString } from "./query-validators.js";
 
 const isAdminRole = (value: unknown): boolean => value === "ADMIN";
 
@@ -54,6 +54,12 @@ export const registerAdminRoutes = (
             }
           },
           403: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          400: {
             type: "object",
             properties: {
               message: { type: "string" }
@@ -289,6 +295,9 @@ export const registerAdminRoutes = (
         querystring: {
           type: "object",
           properties: {
+            roomId: { type: "string" },
+            from: { type: "string", format: "date-time" },
+            to: { type: "string", format: "date-time" },
             status: {
               type: "string",
               enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
@@ -318,20 +327,44 @@ export const registerAdminRoutes = (
             properties: {
               message: { type: "string" }
             }
+          },
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
           }
         }
       }
     },
     async (request, reply) => {
       const role = request.headers["x-role"];
-      const query = request.query as { status?: "RESERVED" | "OCCUPIED" | "NO_SHOW_RELEASED" | "CANCELLED" | "COMPLETED" };
+      const query = request.query as {
+        status?: "RESERVED" | "OCCUPIED" | "NO_SHOW_RELEASED" | "CANCELLED" | "COMPLETED";
+        roomId?: string;
+        from?: string;
+        to?: string;
+      };
 
       if (!ensureAdmin(role)) {
         return reply.status(403).send({ message: "Forbidden" });
       }
 
-      const reservations = await reservationRepository.findAll({ status: query.status });
-      return reply.status(200).send(reservations);
+      if (query.from && !isValidDateString(query.from)) {
+        return reply.status(400).send({ message: "Invalid query" });
+      }
+
+      if (query.to && !isValidDateString(query.to)) {
+        return reply.status(400).send({ message: "Invalid query" });
+      }
+
+      const filteredReservations = await reservationRepository.findAll({
+        status: query.status,
+        roomId: query.roomId,
+        from: query.from ? new Date(query.from) : undefined,
+        to: query.to ? new Date(query.to) : undefined
+      });
+      return reply.status(200).send(filteredReservations);
     }
   );
 

@@ -2,6 +2,9 @@ import { Reservation } from "../../domain/entities/reservation.js";
 
 type ReservationFilter = {
   status?: Reservation["status"];
+  roomId?: string;
+  from?: Date;
+  to?: Date;
 };
 
 export class InMemoryReservationRepository {
@@ -45,12 +48,24 @@ export class InMemoryReservationRepository {
   }
 
   async findAll(filter: ReservationFilter = {}): Promise<Reservation[]> {
-    const items = Array.from(this.items.values());
+    return Array.from(this.items.values()).filter((item) => {
+      if (filter.status && item.status !== filter.status) {
+        return false;
+      }
 
-    if (!filter.status) {
-      return items;
-    }
+      if (filter.roomId && item.roomId !== filter.roomId) {
+        return false;
+      }
 
-    return items.filter((item) => item.status === filter.status);
+      if (filter.from && item.startTime < filter.from) {
+        return false;
+      }
+
+      if (filter.to && item.endTime > filter.to) {
+        return false;
+      }
+
+      return true;
+    });
   }
 }
