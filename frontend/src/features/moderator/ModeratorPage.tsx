@@ -4,6 +4,7 @@ import { moderatorApi } from './api/moderator.api'
 import type { Reservation } from '../../entities/reservation/model/types'
 import type { ReservationStatus } from '../../entities/reservation/model/status'
 import type { Room } from '../../entities/room/model/types'
+import { splitRoomId } from '../../shared/utils/roomId'
 
 const statusColorMap: Record<ReservationStatus, string> = {
   RESERVED: 'bg-brand-primary text-white',
@@ -109,7 +110,7 @@ export function ModeratorPage({
       <div className="grid gap-4 xl:grid-cols-3">
         <form className="brutal-border bg-white p-4" onSubmit={createRoom}>
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Create room</p>
-          <input className={`${inputClass} mb-3`} value={adminRoomForm.newId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, newId: event.target.value }))} placeholder="A1-120" />
+          <input className={`${inputClass} mb-3`} value={adminRoomForm.newId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, newId: event.target.value }))} placeholder="A10-314" />
           <button className="btn-brutal w-full bg-text-primary py-3 text-white" type="submit">Create</button>
         </form>
         <form className="brutal-border bg-white p-4" onSubmit={renameRoom}>
@@ -135,7 +136,11 @@ export function ModeratorPage({
               className={`w-full brutal-border bg-white p-3 text-left ${selectedRoomId === room.id ? 'bg-brand-accent' : ''}`}
               onClick={() => setSelectedRoomId(room.id)}
             >
-              <p className="font-black">{room.id}</p>
+              <p className="font-black">
+                <span className="text-brand-primary">{splitRoomId(room.id).buildingCode}</span>
+                <span>-</span>
+                <span className="text-danger">{splitRoomId(room.id).roomNumber}</span>
+              </p>
             </button>
           ))}
         </div>

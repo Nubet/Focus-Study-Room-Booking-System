@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { Room } from '../../entities/room/model/types'
 import type { RoomSort, RoomStatusFilter } from '../../shared/types/common'
 import { TIME_OPTIONS } from '../../shared/constants/time'
+import { splitRoomId } from '../../shared/utils/roomId'
 
 type BuildingMap = Map<string, string>
 
@@ -197,7 +198,7 @@ export function RoomsPage({
           <p className="text-sm font-semibold text-text-muted">No rooms found.</p>
         ) : (
           visibleRooms.map((room) => {
-            const [buildingCode] = room.id.split('-')
+            const { buildingCode, roomNumber } = splitRoomId(room.id)
             const isAvailable = availableSet.has(room.id)
             const isBookedByYou = myBookedSet.has(room.id)
             const isSelected = selectedRoomId === room.id
@@ -205,7 +206,11 @@ export function RoomsPage({
             return (
               <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isSelected ? 'bg-brand-primary text-white shadow-brutal-sm' : ''} ${isBookedByYou ? 'bg-state-booked-by-you' : isAvailable ? 'bg-state-available' : 'bg-state-unavailable'}`} onClick={() => handleSelectRoom(room.id)}>
                 <div className="mb-2 h-10 w-10 brutal-border bg-bg-canvas" />
-                <p className="text-lg font-black">{room.id}</p>
+                <p className="text-lg font-black">
+                  <span className={isSelected ? 'text-white' : 'text-brand-primary'}>{buildingCode}</span>
+                  <span>-</span>
+                  <span className={isSelected ? 'text-white' : 'text-danger'}>{roomNumber}</span>
+                </p>
                 <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-text-muted'}`}>{buildingNameByCode.get(buildingCode) ?? 'Unknown building'}</p>
                 <p className="mt-2 text-[11px] font-black uppercase tracking-wider">{isBookedByYou ? 'Booked by you' : isAvailable ? 'Available' : 'Unavailable'}</p>
               </button>
