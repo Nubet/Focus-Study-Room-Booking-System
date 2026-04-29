@@ -170,4 +170,88 @@ describe("admin access guard", () => {
 
     expect(response.statusCode).toBe(404);
   });
+
+  it("lists all reservations for admin role", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-1",
+        roomId: "room-a",
+        userId: "user-a",
+        startTime: "2026-05-10T10:00:00.000Z",
+        endTime: "2026-05-10T11:00:00.000Z"
+      }
+    });
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-2",
+        roomId: "room-b",
+        userId: "user-b",
+        startTime: "2026-05-10T11:00:00.000Z",
+        endTime: "2026-05-10T12:00:00.000Z"
+      }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/admin/reservations",
+      headers: {
+        "x-role": "ADMIN"
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("filters reservations by status for admin role", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-3",
+        roomId: "room-a",
+        userId: "user-c",
+        startTime: "2026-05-10T13:00:00.000Z",
+        endTime: "2026-05-10T14:00:00.000Z"
+      }
+    });
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-4",
+        roomId: "room-b",
+        userId: "user-d",
+        startTime: "2026-05-10T14:00:00.000Z",
+        endTime: "2026-05-10T15:00:00.000Z"
+      }
+    });
+
+    await app.inject({
+      method: "DELETE",
+      url: "/reservations/res-admin-4"
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/admin/reservations?status=CANCELLED",
+      headers: {
+        "x-role": "ADMIN"
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const statuses = response.json().map((item: { status: string }) => item.status);
+    expect(statuses.every((status: string) => status === "CANCELLED")).toBe(true);
+  });
 });
