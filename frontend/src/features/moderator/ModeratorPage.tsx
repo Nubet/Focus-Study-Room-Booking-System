@@ -37,7 +37,8 @@ export function ModeratorPage({
   reloadReservations
 }: Props) {
   const [selectedReservationId, setSelectedReservationId] = useState('')
-  const [adminRoomForm, setAdminRoomForm] = useState({ newId: '', sourceId: '', targetId: '', deleteId: '' })
+  const [selectedRoomId, setSelectedRoomId] = useState('')
+  const [adminRoomForm, setAdminRoomForm] = useState({ newId: '', targetId: '' })
   const [adminStatusForm, setAdminStatusForm] = useState({ reservationId: '', status: 'COMPLETED' as ReservationStatus })
 
   const createRoom = (event: FormEvent) => {
@@ -56,26 +57,28 @@ export function ModeratorPage({
 
   const renameRoom = (event: FormEvent) => {
     event.preventDefault()
-    if (!adminRoomForm.sourceId || !adminRoomForm.targetId) {
+    if (!selectedRoomId || !adminRoomForm.targetId) {
       setMessage('Select room and enter new id.')
       return
     }
     run(async () => {
-      const result = await moderatorApi.renameRoom(adminRoomForm.sourceId, adminRoomForm.targetId, adminHeaders)
+      const result = await moderatorApi.renameRoom(selectedRoomId, adminRoomForm.targetId, adminHeaders)
       setMessage(`Room updated: ${result.id}`)
+      setSelectedRoomId(result.id)
       setAdminRoomForm((prev) => ({ ...prev, targetId: '' }))
       await reloadRooms()
     })
   }
 
   const deleteRoom = () => {
-    if (!adminRoomForm.deleteId) {
+    if (!selectedRoomId) {
       setMessage('Select room first.')
       return
     }
     run(async () => {
-      await moderatorApi.deleteRoom(adminRoomForm.deleteId, adminHeaders)
+      await moderatorApi.deleteRoom(selectedRoomId, adminHeaders)
       setMessage('Room deleted.')
+      setSelectedRoomId('')
       await reloadRooms()
     })
   }
@@ -108,14 +111,30 @@ export function ModeratorPage({
         </form>
         <form className="brutal-border bg-white p-4" onSubmit={renameRoom}>
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Rename room</p>
-          <input className={`${inputClass} mb-2`} value={adminRoomForm.sourceId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, sourceId: event.target.value }))} placeholder="Source" />
+          <input className={`${inputClass} mb-2`} value={selectedRoomId} readOnly placeholder="Select room below" />
           <input className={`${inputClass} mb-3`} value={adminRoomForm.targetId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, targetId: event.target.value }))} placeholder="Target" />
           <button className="btn-brutal w-full bg-brand-accent py-3" type="submit">Update</button>
         </form>
         <div className="brutal-border bg-white p-4">
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Delete room</p>
-          <input className={`${inputClass} mb-3`} value={adminRoomForm.deleteId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, deleteId: event.target.value }))} placeholder="Room ID" />
+          <input className={`${inputClass} mb-3`} value={selectedRoomId} readOnly placeholder="Select room below" />
           <button className="btn-brutal w-full bg-danger py-3 text-white" type="button" onClick={deleteRoom}>Delete</button>
+        </div>
+      </div>
+
+      <div className="mt-4 brutal-border bg-bg-canvas p-4">
+        <p className="mb-2 text-sm font-black uppercase tracking-wider">Rooms</p>
+        <div className="max-h-72 space-y-2 overflow-auto pr-1">
+          {rooms.map((room) => (
+            <button
+              key={room.id}
+              type="button"
+              className={`w-full brutal-border bg-white p-3 text-left ${selectedRoomId === room.id ? 'bg-brand-accent' : ''}`}
+              onClick={() => setSelectedRoomId(room.id)}
+            >
+              <p className="font-black">{room.id}</p>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -147,12 +166,6 @@ export function ModeratorPage({
           <button className="btn-brutal w-full bg-danger py-3 text-white" type="submit">Update status</button>
         </form>
       </div>
-
-      {rooms.length > 0 ? (
-        <div className="mt-4 text-xs font-semibold text-text-muted">
-          Tip: for rename/delete, use existing room ids like {rooms[0].id}
-        </div>
-      ) : null}
     </section>
   )
 }

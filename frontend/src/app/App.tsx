@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BookingPage } from '../pages/booking/BookingPage'
 import { ModeratorPage } from '../pages/moderator/ModeratorPage'
 import { RoomsPage } from '../pages/rooms/RoomsPage'
@@ -45,6 +45,16 @@ export default function App() {
   const inputClass =
     'w-full brutal-border bg-bg-surface px-3 py-2.5 text-sm font-semibold text-text-primary outline-none focus:bg-brand-accent/20'
   const labelClass = 'mb-1 block text-[11px] font-black tracking-wider uppercase'
+
+  const loadAvailabilityForRoomsView = useCallback(
+    () =>
+      void loadAvailableRooms({
+        day: roomsFilter.day,
+        fromTime: roomsFilter.fromTime,
+        toTime: roomsFilter.toTime
+      }),
+    [loadAvailableRooms, roomsFilter.day, roomsFilter.fromTime, roomsFilter.toTime]
+  )
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-[1500px] p-6 lg:p-10">
@@ -109,14 +119,7 @@ export default function App() {
             availableSet={availableSet}
             myBookedSet={myBookedSet}
             loadRooms={() => void loadRooms(adminHeaders)}
-            loadAvailableRooms={() =>
-              void loadAvailableRooms({
-                day: roomsFilter.day,
-                fromTime: roomsFilter.fromTime,
-                toTime: roomsFilter.toTime
-              })
-            }
-            onPickRoom={() => setView('BOOKING')}
+            loadAvailableRooms={loadAvailabilityForRoomsView}
             dayOptions={sharedDayOptions}
           />
         ) : null}

@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { bookingApi } from './api/booking.api'
 import { TIME_OPTIONS } from '../../shared/constants/time'
 import { toIsoDateTime } from '../../shared/utils/dateTime'
@@ -52,6 +52,18 @@ export function BookingPage({
 
   const stepStyles = (step: BookingStep) =>
     bookingStep === step ? 'bg-text-primary text-white' : bookingStep > step ? 'bg-success text-white' : 'bg-white text-text-primary'
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      void loadAvailableRooms({
+        day: createReservation.day,
+        fromTime: createReservation.startTime,
+        toTime: createReservation.endTime
+      })
+    }, 350)
+
+    return () => clearTimeout(timeout)
+  }, [createReservation.day, createReservation.startTime, createReservation.endTime, loadAvailableRooms])
 
   const createNewReservation = (event: FormEvent) => {
     event.preventDefault()
