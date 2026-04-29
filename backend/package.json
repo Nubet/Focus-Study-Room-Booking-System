@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "seed": "tsx prisma/seed.ts",
-    "dev": "tsx watch src/main.ts",
+    "dev": "tsx watch src/app/main.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/src/main.js",
+    "start": "node dist/src/app/main.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -1,4 +1,4 @@
-import { Reservation } from "../../domain/entities/reservation.js";
+import { Reservation } from "../../../reservations/domain/entities/reservation.js";
 
 type Room = {
   id: string;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CreateReservationUseCase } from "@src/application/use-cases/create-reservation.use-case.js";
-import { Reservation } from "@src/domain/entities/reservation.js";
+import { CreateReservationUseCase } from "@src/modules/reservations/application/use-cases/create-reservation.use-case.js";
+import { Reservation } from "@src/modules/reservations/domain/entities/reservation.js";
 
 type InMemoryReservationRepository = {
   save: (reservation: Reservation) => Promise<void>;

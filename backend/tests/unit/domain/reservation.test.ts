@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Reservation } from "../../../src/domain/entities/reservation.js";
+import { Reservation } from "@src/modules/reservations/domain/entities/reservation.js";
 
 describe("Reservation", () => {
   it("creates active reservation when start is before end", () => {

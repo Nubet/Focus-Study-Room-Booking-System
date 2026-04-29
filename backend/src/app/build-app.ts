@@ -2,13 +2,13 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
-import { registerAdminRoutes } from "./api/routes/admin-routes.js";
-import { registerRoomsRoutes } from "./api/routes/rooms-routes.js";
-import { registerReservationsRoutes } from "./api/routes/reservations-routes.js";
-import { RoomRepository } from "./domain/repositories/room-repository.js";
-import { ReservationRepository } from "./domain/repositories/reservation-repository.js";
-import { InMemoryRoomRepository } from "./infrastructure/repositories/in-memory-room-repository.js";
-import { InMemoryReservationRepository } from "./infrastructure/repositories/in-memory-reservation-repository.js";
+import { registerAdminRoutes } from "../modules/admin/api/routes/admin-routes.js";
+import { registerRoomsRoutes } from "../modules/rooms/api/routes/rooms-routes.js";
+import { registerReservationsRoutes } from "../modules/reservations/api/routes/reservations-routes.js";
+import { RoomRepository } from "../modules/rooms/domain/repositories/room-repository.js";
+import { ReservationRepository } from "../modules/reservations/domain/repositories/reservation-repository.js";
+import { InMemoryRoomRepository } from "../modules/rooms/infrastructure/repositories/in-memory-room-repository.js";
+import { InMemoryReservationRepository } from "../modules/reservations/infrastructure/repositories/in-memory-reservation-repository.js";
 
 export const buildApp = (
   roomRepository: RoomRepository = new InMemoryRoomRepository(),

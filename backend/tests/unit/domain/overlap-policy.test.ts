@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasTimeOverlap } from "../../../src/domain/policies/overlap-policy.js";
+import { hasTimeOverlap } from "@src/modules/reservations/domain/policies/overlap-policy.js";
 
 describe("hasTimeOverlap", () => {
   it("returns true when windows overlap", () => {

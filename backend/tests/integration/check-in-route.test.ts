@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildApp } from "@src/app.js";
+import { buildApp } from "@src/app/build-app.js";
 import { createHmac } from "node:crypto";
 
 const toBase64Url = (value: string): string => Buffer.from(value).toString("base64url");

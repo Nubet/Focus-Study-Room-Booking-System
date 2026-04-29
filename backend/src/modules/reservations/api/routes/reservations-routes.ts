@@ -3,13 +3,13 @@ import { CancelReservationUseCase } from "../../application/use-cases/cancel-res
 import { CheckInReservationUseCase } from "../../application/use-cases/check-in-reservation.use-case.js";
 import { CreateReservationUseCase } from "../../application/use-cases/create-reservation.use-case.js";
 import { ListMyReservationsUseCase } from "../../application/use-cases/list-my-reservations.use-case.js";
-import { mapErrorToResponse } from "../http/map-error-to-response.js";
+import { mapErrorToResponse } from "../../../../shared/http/map-error-to-response.js";
 import { ReservationRepository } from "../../domain/repositories/reservation-repository.js";
 import {
   CreateReservationBody,
   isCreateReservationBody
-} from "./reservations-payload.js";
-import { isNonEmptyString, isValidDateString } from "./query-validators.js";
+} from "../dto/reservations-payload.js";
+import { isNonEmptyString, isValidDateString } from "../validators/query-validators.js";
 import {
   InvalidPayloadError,
   InvalidQueryError

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildApp } from "@src/app.js";
+import { buildApp } from "@src/app/build-app.js";
 
 describe("admin openapi contract", () => {
   it("exposes admin endpoints in openapi paths", async () => {
