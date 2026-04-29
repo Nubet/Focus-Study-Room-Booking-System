@@ -54,6 +54,7 @@ export function RoomsPage({
   loadAvailableRooms,
   dayOptions
 }: Props) {
+  const roomIdCollator = useMemo(() => new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }), [])
   const [selectedRoomId, setSelectedRoomId] = useState('')
   const detailsRef = useRef<HTMLDivElement | null>(null)
 
@@ -94,12 +95,17 @@ export function RoomsPage({
       return true
     })
     .sort((a, b) => {
-      if (roomsFilter.sort === 'ROOM_ASC') return a.id.localeCompare(b.id)
-      if (roomsFilter.sort === 'ROOM_DESC') return b.id.localeCompare(a.id)
-      const [ab] = a.id.split('-')
-      const [bb] = b.id.split('-')
-      if (ab === bb) return a.id.localeCompare(b.id)
-      return ab.localeCompare(bb)
+      if (roomsFilter.sort === 'ROOM_ASC') return roomIdCollator.compare(a.id, b.id)
+      if (roomsFilter.sort === 'ROOM_DESC') return roomIdCollator.compare(b.id, a.id)
+
+      const [buildingCodeA] = a.id.split('-')
+      const [buildingCodeB] = b.id.split('-')
+      const buildingNameA = buildingNameByCode.get(buildingCodeA) ?? buildingCodeA
+      const buildingNameB = buildingNameByCode.get(buildingCodeB) ?? buildingCodeB
+      const byBuildingName = buildingNameA.localeCompare(buildingNameB, undefined, { sensitivity: 'base' })
+
+      if (byBuildingName !== 0) return byBuildingName
+      return roomIdCollator.compare(a.id, b.id)
     })
 
   const selectedRoom = useMemo(
@@ -151,7 +157,7 @@ export function RoomsPage({
           <select className={inputClass} value={roomsFilter.sort} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, sort: event.target.value as RoomSort }))}>
             <option value="ROOM_ASC">Room A-Z</option>
             <option value="ROOM_DESC">Room Z-A</option>
-            <option value="BUILDING">Building</option>
+            <option value="BUILDING">Building (A-Z)</option>
           </select>
         </div>
         <div>
