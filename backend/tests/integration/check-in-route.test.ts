@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { buildApp } from "@src/app.js";
+import { createHmac } from "node:crypto";
+
+const toBase64Url = (value: string): string => Buffer.from(value).toString("base64url");
+
+const createSignedQrPayload = (payload: Record<string, unknown>, secret: string): string => {
+  const headerPart = toBase64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const payloadPart = toBase64Url(JSON.stringify(payload));
+  const content = `${headerPart}.${payloadPart}`;
+  const signature = createHmac("sha256", secret).update(content).digest("base64url");
+  return `${content}.${signature}`;
+};
 
 describe("check-in route", () => {
   it("returns 200 and occupied status for valid PIN check-in", async () => {
@@ -119,6 +130,89 @@ describe("check-in route", () => {
         method: "PIN",
         code: "bad-code",
         userId: "user-3"
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("returns 200 for valid QR signed payload", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-804",
+        roomId: "room-d",
+        userId: "user-4",
+        startTime: "2026-05-10T10:00:00.000Z",
+        endTime: "2026-05-10T11:00:00.000Z"
+      }
+    });
+
+    const qrCode = createSignedQrPayload(
+      {
+        type: "CHECK_IN_QR",
+        reservationId: "res-804",
+        userId: "user-4",
+        iat: 1760000000,
+        exp: 4102444800,
+        nonce: "nonce-1"
+      },
+      "dev-qr-secret"
+    );
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations/res-804/check-in",
+      payload: {
+        method: "QR",
+        code: qrCode,
+        userId: "user-4"
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ reservationId: "res-804", status: "OCCUPIED" });
+  });
+
+  it("returns 403 for tampered QR signed payload", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-805",
+        roomId: "room-e",
+        userId: "user-5",
+        startTime: "2026-05-10T10:00:00.000Z",
+        endTime: "2026-05-10T11:00:00.000Z"
+      }
+    });
+
+    const validQrCode = createSignedQrPayload(
+      {
+        type: "CHECK_IN_QR",
+        reservationId: "res-805",
+        userId: "user-5",
+        iat: 1760000000,
+        exp: 4102444800,
+        nonce: "nonce-2"
+      },
+      "dev-qr-secret"
+    );
+
+    const tamperedQrCode = `${validQrCode}tampered`;
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations/res-805/check-in",
+      payload: {
+        method: "QR",
+        code: tamperedQrCode,
+        userId: "user-5"
       }
     });
 
