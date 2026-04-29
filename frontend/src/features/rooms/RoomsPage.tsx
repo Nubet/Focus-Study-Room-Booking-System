@@ -132,8 +132,8 @@ export function RoomsPage({
         <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={loadAvailableRooms}>Refresh availability</button>
       </div>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-8">
-        <div className="xl:col-span-2">
+      <div className="mb-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+        <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2">
           <label className={labelClass}>Search room or building</label>
           <input className={inputClass} value={roomsFilter.query} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, query: event.target.value }))} placeholder="A1-120 or chemistry" />
         </div>
@@ -216,7 +216,7 @@ export function RoomsPage({
 
             return (
               <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isSelected ? 'bg-brand-primary text-white shadow-brutal-sm' : ''} ${isBookedByYou ? 'bg-state-booked-by-you' : isAvailable ? 'bg-state-available' : 'bg-state-unavailable'}`} onClick={() => handleSelectRoom(room.id)}>
-                <div className="mb-2 h-10 w-10 brutal-border bg-bg-canvas" />
+                <div className="mb-2 h-8 w-8 sm:h-10 sm:w-10 brutal-border bg-bg-canvas" />
                 <p className="text-lg font-black">
                   <span className={isSelected ? 'text-white' : 'text-brand-primary'}>{buildingCode}</span>
                   <span>-</span>

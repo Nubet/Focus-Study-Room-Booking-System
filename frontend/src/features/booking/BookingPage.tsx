@@ -134,20 +134,20 @@ export function BookingPage({
 
   return (
     <section className={panelClass}>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2">
         <h2 className="mr-auto text-2xl font-black uppercase tracking-tight">Booking Wizard</h2>
-        <div className="flex items-center gap-2 bg-bg-canvas px-3 py-1 brutal-border">
-          <label htmlFor="simulate-login" className="text-xs font-bold uppercase tracking-wider text-text-muted">Simulate login as:</label>
-          <input id="simulate-login" className="w-35 brutal-border bg-white px-2 py-1 text-xs font-semibold" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
+        <div className="flex w-full sm:w-auto items-center gap-2 bg-bg-canvas px-3 py-1 brutal-border">
+          <label htmlFor="simulate-login" className="text-xs font-bold uppercase tracking-wider text-text-muted whitespace-nowrap">Simulate login as:</label>
+          <input id="simulate-login" className="w-full sm:w-35 brutal-border bg-white px-2 py-1 text-xs font-semibold min-h-11 sm:min-h-0" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
         </div>
-        <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => loadAvailableRooms({ day: createReservation.day, fromTime: createReservation.startTime, toTime: createReservation.endTime })}>Load available rooms</button>
+        <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs w-full sm:w-auto min-h-11 sm:min-h-0" type="button" onClick={() => loadAvailableRooms({ day: createReservation.day, fromTime: createReservation.startTime, toTime: createReservation.endTime })}>Load available rooms</button>
       </div>
 
-      <div className="mb-5 grid grid-cols-3 gap-2">
-        <button type="button" className={`brutal-border py-2 text-xs font-black uppercase ${stepStyles(1)}`} onClick={() => setBookingStep(1)}>Step 1 room</button>
+      <div className="mb-5 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button type="button" className={`brutal-border py-3 sm:py-2 text-xs font-black uppercase ${stepStyles(1)}`} onClick={() => setBookingStep(1)}>Step 1 room</button>
         <button
           type="button"
-          className={`brutal-border py-2 text-xs font-black uppercase ${stepStyles(2)} ${canOpenStep2 ? '' : 'opacity-60 cursor-not-allowed'}`}
+          className={`brutal-border py-3 sm:py-2 text-xs font-black uppercase ${stepStyles(2)} ${canOpenStep2 ? '' : 'opacity-60 cursor-not-allowed'}`}
           onClick={goToStep2}
           disabled={!canOpenStep2}
         >
@@ -155,7 +155,7 @@ export function BookingPage({
         </button>
         <button
           type="button"
-          className={`brutal-border py-2 text-xs font-black uppercase ${stepStyles(3)} ${canOpenStep3 ? '' : 'opacity-60 cursor-not-allowed'}`}
+          className={`brutal-border py-3 sm:py-2 text-xs font-black uppercase ${stepStyles(3)} ${canOpenStep3 ? '' : 'opacity-60 cursor-not-allowed'}`}
           onClick={goToStep3}
           disabled={!canOpenStep3}
         >
@@ -165,7 +165,7 @@ export function BookingPage({
 
       {bookingStep === 1 ? (
         <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="max-h-130 space-y-2 overflow-y-scroll pr-1">
+          <div className="max-h-[40vh] lg:max-h-130 space-y-2 overflow-y-auto pr-1">
             {buildings.map((building) => (
               <button key={building.code} type="button" className={`w-full brutal-border p-3 text-left ${activeBuildingCode === building.code ? 'bg-brand-accent' : 'bg-white'}`} onClick={() => setActiveBuildingCode(building.code)}>
                 <p className="text-sm font-black">{building.code}</p>
@@ -181,7 +181,7 @@ export function BookingPage({
               ) : (
                 roomsForActiveBuilding.map((room) => (
                   <button key={room.id} type="button" className={`brutal-border p-4 text-left ${selectedRoomId === room.id ? 'bg-brand-primary text-white' : 'bg-white'}`} onClick={() => { setSelectedRoomId(room.id); setBookingStep(2) }}>
-                    <div className="mb-2 h-10 w-10 brutal-border bg-bg-canvas" />
+                    <div className="mb-2 h-10 w-10 sm:h-10 sm:w-10 brutal-border bg-bg-canvas" />
                     <p className="text-lg font-black">
                       <span className={selectedRoomId === room.id ? 'text-white' : 'text-brand-primary'}>{splitRoomId(room.id).buildingCode}</span>
                       <span>-</span>
@@ -197,7 +197,7 @@ export function BookingPage({
       ) : null}
 
       {bookingStep === 2 ? (
-        <div className="mx-auto max-w-2xl brutal-border bg-bg-canvas p-5">
+        <div className="mx-auto max-w-2xl brutal-border bg-bg-canvas p-4 sm:p-5">
           <p className="mb-3 text-sm font-black uppercase tracking-wider">Selected room</p>
           <label className={labelClass}>Selected room (locked)</label>
           <input
@@ -207,7 +207,7 @@ export function BookingPage({
             disabled
             placeholder="Select room in step 1"
           />
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <label className={labelClass}>Day</label>
               <select className={inputClass} value={createReservation.day} onChange={(event) => setCreateReservation((prev) => ({ ...prev, day: event.target.value }))}>
@@ -248,38 +248,38 @@ export function BookingPage({
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <button className="btn-brutal bg-white py-3" type="button" onClick={() => setBookingStep(1)}>Back</button>
-            <button className="btn-brutal bg-text-primary py-3 text-white" type="button" onClick={goToStep3}>Continue</button>
+            <button className="btn-brutal bg-white py-3 min-h-11" type="button" onClick={() => setBookingStep(1)}>Back</button>
+            <button className="btn-brutal bg-text-primary py-3 text-white min-h-11" type="button" onClick={goToStep3}>Continue</button>
           </div>
         </div>
       ) : null}
 
       {bookingStep === 3 ? (
         <div className="mx-auto max-w-lg brutal-border bg-white shadow-brutal">
-          <div className="border-b-[3px] border-dashed border-text-primary bg-brand-accent p-6 text-center">
-            <h3 className="text-2xl font-black uppercase tracking-widest text-text-primary">Booking Ticket</h3>
-            <p className="mt-1 text-xs font-bold uppercase tracking-wider text-text-muted">Final Confirmation</p>
+          <div className="border-b-[3px] border-dashed border-text-primary bg-brand-accent p-4 sm:p-6 text-center">
+            <h3 className="text-xl sm:text-2xl font-black uppercase tracking-widest text-text-primary">Booking Ticket</h3>
+            <p className="mt-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">Final Confirmation</p>
           </div>
-          <div className="p-6 space-y-5 bg-bg-canvas">
-            <div className="flex justify-between border-b-[3px] border-text-primary pb-4">
-              <div>
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 bg-bg-canvas">
+            <div className="flex flex-wrap sm:flex-nowrap justify-between gap-4 border-b-[3px] border-text-primary pb-4">
+              <div className="w-full sm:w-auto">
                 <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Room</p>
-                <p className="text-2xl font-black text-brand-primary leading-none mt-1">{selectedRoomId || '-'}</p>
-                <p className="text-xs font-bold text-text-primary mt-1 max-w-50 leading-tight">
+                <p className="text-xl sm:text-2xl font-black text-brand-primary leading-none mt-1">{selectedRoomId || '-'}</p>
+                <p className="text-xs font-bold text-text-primary mt-1 sm:max-w-50 leading-tight">
                   {selectedRoomId && (buildings.find((b) => b.code === splitRoomId(selectedRoomId).buildingCode)?.name || 'Unknown building')}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="w-full sm:w-auto sm:text-right">
                 <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">User</p>
                 <p className="text-lg font-black leading-none mt-1">{userId}</p>
               </div>
             </div>
-            <div className="flex justify-between border-b-[3px] border-text-primary pb-4">
-              <div>
+            <div className="flex flex-wrap sm:flex-nowrap justify-between gap-4 border-b-[3px] border-text-primary pb-4">
+              <div className="w-full sm:w-auto">
                 <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Date</p>
                 <p className="text-lg font-black leading-none mt-1">{createReservation.day}</p>
               </div>
-              <div className="text-right">
+              <div className="w-full sm:w-auto sm:text-right">
                 <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Time Window</p>
                 <p className="text-lg font-black leading-none mt-1">{createReservation.startTime} - {createReservation.endTime}</p>
               </div>
@@ -291,15 +291,15 @@ export function BookingPage({
               </div>
             </div>
           </div>
-          <div className="border-t-[3px] border-dashed border-text-primary p-6 bg-white">
+          <div className="border-t-[3px] border-dashed border-text-primary p-4 sm:p-6 bg-white">
             <form onSubmit={createNewReservation}>
               <div className="mb-5 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Internal ID (Auto-generated)</p>
-                <p className="font-mono text-xs font-semibold text-text-primary mt-1">{createReservation.id}</p>
+                <p className="font-mono text-xs font-semibold text-text-primary mt-1 break-all">{createReservation.id}</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <button className="btn-brutal bg-bg-canvas py-3 font-black uppercase tracking-wider" type="button" onClick={() => setBookingStep(2)}>Back</button>
-                <button className="btn-brutal bg-success py-3 text-white font-black uppercase tracking-wider hover:brightness-110" type="submit">Confirm & Book</button>
+                <button className="btn-brutal bg-bg-canvas py-3 min-h-11 font-black uppercase tracking-wider text-xs sm:text-sm" type="button" onClick={() => setBookingStep(2)}>Back</button>
+                <button className="btn-brutal bg-success py-3 min-h-11 text-white font-black uppercase tracking-wider hover:brightness-110 text-xs sm:text-sm" type="submit">Confirm</button>
               </div>
             </form>
           </div>
