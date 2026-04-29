@@ -204,6 +204,14 @@ export const registerAdminRoutes = (
         return reply.status(400).send({ message: "Invalid payload" });
       }
 
+      if (params.id !== body.id) {
+        const duplicate = await roomRepository.findById(body.id);
+
+        if (duplicate) {
+          return reply.status(409).send({ message: "Room already exists" });
+        }
+      }
+
       const updated = await roomRepository.updateId(params.id, body.id);
 
       if (!updated) {
