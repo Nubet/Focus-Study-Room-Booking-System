@@ -107,33 +107,33 @@ export function ModeratorPage({
         <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => void reloadRooms()}>Load rooms</button>
         <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => void reloadReservations()}>Load reservations</button>
       </div>
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <form className="brutal-border bg-white p-4" onSubmit={createRoom}>
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Create room</p>
           <input className={`${inputClass} mb-3`} value={adminRoomForm.newId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, newId: event.target.value }))} placeholder="A10-314" />
-          <button className="btn-brutal w-full bg-text-primary py-3 text-white" type="submit">Create</button>
+          <button className="btn-brutal w-full bg-text-primary py-3 min-h-11 text-white" type="submit">Create</button>
         </form>
         <form className="brutal-border bg-white p-4" onSubmit={renameRoom}>
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Rename room</p>
           <input className={`${inputClass} mb-2`} value={selectedRoomId} readOnly placeholder="Select room below" />
           <input className={`${inputClass} mb-3`} value={adminRoomForm.targetId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, targetId: event.target.value }))} placeholder="Target" />
-          <button className="btn-brutal w-full bg-brand-accent py-3" type="submit">Update</button>
+          <button className="btn-brutal w-full bg-brand-accent py-3 min-h-11" type="submit">Update</button>
         </form>
-        <div className="brutal-border bg-white p-4">
+        <div className="brutal-border bg-white p-4 md:col-span-2 xl:col-span-1">
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Delete room</p>
           <input className={`${inputClass} mb-3`} value={selectedRoomId} readOnly placeholder="Select room below" />
-          <button className="btn-brutal w-full bg-danger py-3 text-white" type="button" onClick={deleteRoom}>Delete</button>
+          <button className="btn-brutal w-full bg-danger py-3 min-h-11 text-white" type="button" onClick={deleteRoom}>Delete</button>
         </div>
       </div>
 
       <div className="mt-4 brutal-border bg-bg-canvas p-4">
         <p className="mb-2 text-sm font-black uppercase tracking-wider">Rooms</p>
-        <div className="max-h-72 space-y-2 overflow-auto pr-1">
+        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
           {rooms.map((room) => (
             <button
               key={room.id}
               type="button"
-              className={`w-full brutal-border bg-white p-3 text-left ${selectedRoomId === room.id ? 'bg-brand-accent' : ''}`}
+              className={`w-full brutal-border bg-white p-3 min-h-11 text-left ${selectedRoomId === room.id ? 'bg-brand-accent' : ''}`}
               onClick={() => setSelectedRoomId(room.id)}
             >
               <p className="font-black">
@@ -147,21 +147,21 @@ export function ModeratorPage({
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <div className="brutal-border bg-bg-canvas p-4">
+        <div className="brutal-border bg-bg-canvas p-4 overflow-hidden">
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Reservations</p>
-          <div className="max-h-72 space-y-2 overflow-auto pr-1">
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
             {reservations.map((reservation) => (
-              <div key={reservation.id} className="brutal-border bg-white p-3">
+              <div key={reservation.id} className="brutal-border bg-white p-3 overflow-hidden">
                 <button
                   type="button"
-                  className="w-full text-left"
+                  className="w-full text-left min-h-11"
                   onClick={() => setExpandedReservationId((prev) => (prev === reservation.id ? '' : reservation.id))}
                 >
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="font-black">{reservation.id}</span>
-                    <span className={`px-2 py-0.5 text-[10px] font-black uppercase ${statusColorMap[reservation.status]}`}>{reservation.status}</span>
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className="font-black break-all">{reservation.id}</span>
+                    <span className={`px-2 py-0.5 text-[10px] font-black uppercase whitespace-nowrap ${statusColorMap[reservation.status]}`}>{reservation.status}</span>
                   </div>
-                  <p className="text-xs font-semibold text-text-muted">{reservation.roomId} · {reservation.userId}</p>
+                  <p className="text-xs font-semibold text-text-muted break-words">{reservation.roomId} · {reservation.userId}</p>
                 </button>
 
                 {expandedReservationId === reservation.id ? (
@@ -169,9 +169,9 @@ export function ModeratorPage({
                     <p className="text-xs font-semibold text-text-muted">
                       {new Date(reservation.startTime).toLocaleString()} - {new Date(reservation.endTime).toLocaleString()}
                     </p>
-                    <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                    <div className="mt-2 flex flex-col sm:flex-row gap-2">
                       <select
-                        className={inputClass}
+                        className={`${inputClass} flex-1`}
                         value={getDraftStatus(reservation)}
                         onChange={(event) => setDraftStatus(reservation.id, event.target.value as ReservationStatus)}
                       >
@@ -182,7 +182,7 @@ export function ModeratorPage({
                         <option value="COMPLETED">COMPLETED</option>
                       </select>
                       <button
-                        className="btn-brutal bg-danger px-4 py-2 text-white"
+                        className="btn-brutal bg-danger px-4 py-2 min-h-11 text-white sm:w-auto w-full"
                         type="button"
                         onClick={() => updateReservationStatus(reservation.id, getDraftStatus(reservation))}
                       >

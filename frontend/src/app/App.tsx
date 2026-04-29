@@ -62,9 +62,9 @@ export default function App() {
     []
   )
 
-  const panelClass = 'bg-bg-surface brutal-border shadow-brutal p-5 md:p-6'
+  const panelClass = 'bg-bg-surface brutal-border shadow-brutal p-4 sm:p-5 md:p-6'
   const inputClass =
-    'w-full brutal-border bg-bg-surface px-3 py-2.5 text-sm font-semibold text-text-primary outline-none focus:bg-brand-accent/20'
+    'w-full brutal-border bg-bg-surface px-3 py-2.5 min-h-11 text-sm font-semibold text-text-primary outline-none focus:bg-brand-accent/20'
   const labelClass = 'mb-1 block text-[11px] font-black tracking-wider uppercase'
   const repoUrl = 'https://github.com/Nubet/Focus-Study-Room-Booking-System'
 
@@ -79,13 +79,13 @@ export default function App() {
   )
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[1500px] p-6 lg:p-10">
-      <header className="mb-6 bg-bg-surface brutal-border shadow-brutal p-4 md:p-5">
+    <div className="mx-auto min-h-screen w-full max-w-[1500px] p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10">
+      <header className="mb-6 bg-bg-surface brutal-border shadow-brutal p-4 sm:p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h1 className="mr-auto text-3xl font-black uppercase tracking-tight md:text-4xl">Focus Room - Booking System</h1>
+          <h1 className="mr-auto text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight">Focus Room - Booking System</h1>
         </div>
 
-        <nav className="grid grid-cols-3 gap-2">
+        <nav className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
           {(['BOOKING', 'ROOMS', 'MODERATOR'] as View[]).map((item) => (
             <button
               key={item}
