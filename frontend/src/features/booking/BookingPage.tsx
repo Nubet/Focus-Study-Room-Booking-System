@@ -138,7 +138,7 @@ export function BookingPage({
         <h2 className="mr-auto text-2xl font-black uppercase tracking-tight">Booking Wizard</h2>
         <div className="flex items-center gap-2 bg-bg-canvas px-3 py-1 brutal-border">
           <label htmlFor="simulate-login" className="text-xs font-bold uppercase tracking-wider text-text-muted">Simulate login as:</label>
-          <input id="simulate-login" className="w-[140px] brutal-border bg-white px-2 py-1 text-xs font-semibold" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
+          <input id="simulate-login" className="w-35 brutal-border bg-white px-2 py-1 text-xs font-semibold" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
         </div>
         <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => loadAvailableRooms({ day: createReservation.day, fromTime: createReservation.startTime, toTime: createReservation.endTime })}>Load available rooms</button>
       </div>
@@ -165,7 +165,7 @@ export function BookingPage({
 
       {bookingStep === 1 ? (
         <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="max-h-[520px] space-y-2 overflow-y-scroll pr-1">
+          <div className="max-h-130 space-y-2 overflow-y-scroll pr-1">
             {buildings.map((building) => (
               <button key={building.code} type="button" className={`w-full brutal-border p-3 text-left ${activeBuildingCode === building.code ? 'bg-brand-accent' : 'bg-white'}`} onClick={() => setActiveBuildingCode(building.code)}>
                 <p className="text-sm font-black">{building.code}</p>
@@ -265,7 +265,7 @@ export function BookingPage({
               <div>
                 <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Room</p>
                 <p className="text-2xl font-black text-brand-primary leading-none mt-1">{selectedRoomId || '-'}</p>
-                <p className="text-xs font-bold text-text-primary mt-1 max-w-[200px] leading-tight">
+                <p className="text-xs font-bold text-text-primary mt-1 max-w-50 leading-tight">
                   {selectedRoomId && (buildings.find((b) => b.code === splitRoomId(selectedRoomId).buildingCode)?.name || 'Unknown building')}
                 </p>
               </div>
