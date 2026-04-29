@@ -254,4 +254,80 @@ describe("admin access guard", () => {
     const statuses = response.json().map((item: { status: string }) => item.status);
     expect(statuses.every((status: string) => status === "CANCELLED")).toBe(true);
   });
+
+  it("updates reservation status for admin role", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-5",
+        roomId: "room-a",
+        userId: "user-e",
+        startTime: "2026-05-10T16:00:00.000Z",
+        endTime: "2026-05-10T17:00:00.000Z"
+      }
+    });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/admin/reservations/res-admin-5/status",
+      headers: {
+        "x-role": "ADMIN"
+      },
+      payload: {
+        status: "COMPLETED"
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ id: "res-admin-5", status: "COMPLETED" });
+  });
+
+  it("returns 404 when updating missing reservation status", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/admin/reservations/missing-res/status",
+      headers: {
+        "x-role": "ADMIN"
+      },
+      payload: {
+        status: "COMPLETED"
+      }
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("returns 400 for invalid reservation status update payload", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-6",
+        roomId: "room-b",
+        userId: "user-f",
+        startTime: "2026-05-10T18:00:00.000Z",
+        endTime: "2026-05-10T19:00:00.000Z"
+      }
+    });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/admin/reservations/res-admin-6/status",
+      headers: {
+        "x-role": "ADMIN"
+      },
+      payload: {
+        status: "WRONG"
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
 });
