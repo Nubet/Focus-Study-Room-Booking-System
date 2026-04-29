@@ -36,6 +36,32 @@ export default function App() {
     void loadAvailableRooms()
   }, [adminHeaders])
 
+  useEffect(() => {
+    if (view !== 'MODERATOR') {
+      return
+    }
+
+    void loadModeratorReservations(adminHeaders, {
+      status: '',
+      roomId: '',
+      from: '',
+      to: ''
+    })
+
+    const intervalId = window.setInterval(() => {
+      void loadModeratorReservations(adminHeaders, {
+        status: '',
+        roomId: '',
+        from: '',
+        to: ''
+      })
+    }, 5000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [view, adminHeaders, loadModeratorReservations])
+
   const buildingNameByCode = useMemo(
     () => new Map(plCampusBuildings.map((building) => [building.code, building.name])),
     []
