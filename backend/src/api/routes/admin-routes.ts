@@ -179,4 +179,57 @@ export const registerAdminRoutes = (
       return reply.status(200).send(updated);
     }
   );
+
+  app.delete(
+    "/admin/rooms/:id",
+    {
+      schema: {
+        tags: ["admin"],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string" }
+          }
+        },
+        response: {
+          204: {
+            type: "null"
+          },
+          403: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          }
+        }
+      }
+    },
+    async (request, reply) => {
+      const role = request.headers["x-role"];
+      const params = request.params as { id?: string };
+
+      if (!ensureAdmin(role)) {
+        return reply.status(403).send({ message: "Forbidden" });
+      }
+
+      if (!isNonEmptyString(params.id)) {
+        return reply.status(404).send({ message: "Room not found" });
+      }
+
+      const deleted = await roomRepository.deleteById(params.id);
+
+      if (!deleted) {
+        return reply.status(404).send({ message: "Room not found" });
+      }
+
+      return reply.status(204).send();
+    }
+  );
 };

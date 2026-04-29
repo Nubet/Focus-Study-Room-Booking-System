@@ -28,4 +28,15 @@ export class InMemoryRoomRepository {
     room.id = nextId;
     return room;
   }
+
+  async deleteById(id: string): Promise<boolean> {
+    const index = this.rooms.findIndex((item) => item.id === id);
+
+    if (index === -1) {
+      return false;
+    }
+
+    this.rooms.splice(index, 1);
+    return true;
+  }
 }
