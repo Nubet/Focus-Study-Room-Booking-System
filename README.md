@@ -32,13 +32,17 @@ Role and active user ID can be toggled directly in the UI.
 - Node.js
 - Docker Desktop
 
-### 1) Start backend (Docker)
+### 1) Environment setup
+Before starting, create the `.env` file required by the backend to connect to the database:
+You can do this by manually copying the content of .env.example into a new file named .env
+
+### 2) Start backend (Docker)
 ```bash
 cd devenv/compose
 docker compose up --build
 ```
 
-### 2) Start frontend (Local)
+### 3) Start frontend (Local)
 ```bash
 cd frontend
 npm install
