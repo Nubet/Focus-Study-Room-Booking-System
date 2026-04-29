@@ -275,6 +275,129 @@ describe("check-in route", () => {
     expect(response.statusCode).toBe(403);
   });
 
+  it("returns 403 for QR payload with invalid type", async () => {
+    const app = buildApp();
+    const window = createActiveReservationWindow();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-810",
+        roomId: "room-h",
+        userId: "user-10",
+        startTime: window.startTime,
+        endTime: window.endTime
+      }
+    });
+
+    const qrCode = createSignedQrPayload(
+      {
+        type: "WRONG_TYPE",
+        reservationId: "res-810",
+        userId: "user-10",
+        iat: 1760000000,
+        exp: 4102444800,
+        nonce: "nonce-wrong-type"
+      },
+      "dev-qr-secret"
+    );
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations/res-810/check-in",
+      payload: {
+        method: "QR",
+        code: qrCode,
+        userId: "user-10"
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("returns 403 for QR payload reservationId mismatch", async () => {
+    const app = buildApp();
+    const window = createActiveReservationWindow();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-811",
+        roomId: "room-i",
+        userId: "user-11",
+        startTime: window.startTime,
+        endTime: window.endTime
+      }
+    });
+
+    const qrCode = createSignedQrPayload(
+      {
+        type: "CHECK_IN_QR",
+        reservationId: "res-other",
+        userId: "user-11",
+        iat: 1760000000,
+        exp: 4102444800,
+        nonce: "nonce-res-mismatch"
+      },
+      "dev-qr-secret"
+    );
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations/res-811/check-in",
+      payload: {
+        method: "QR",
+        code: qrCode,
+        userId: "user-11"
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("returns 403 for QR payload userId mismatch", async () => {
+    const app = buildApp();
+    const window = createActiveReservationWindow();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-812",
+        roomId: "room-j",
+        userId: "user-12",
+        startTime: window.startTime,
+        endTime: window.endTime
+      }
+    });
+
+    const qrCode = createSignedQrPayload(
+      {
+        type: "CHECK_IN_QR",
+        reservationId: "res-812",
+        userId: "user-other",
+        iat: 1760000000,
+        exp: 4102444800,
+        nonce: "nonce-user-mismatch"
+      },
+      "dev-qr-secret"
+    );
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/reservations/res-812/check-in",
+      payload: {
+        method: "QR",
+        code: qrCode,
+        userId: "user-12"
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
+
   it("returns 403 when check-in is outside allowed time window", async () => {
     const app = buildApp();
 
