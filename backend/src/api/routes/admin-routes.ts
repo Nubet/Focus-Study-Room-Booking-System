@@ -109,4 +109,74 @@ export const registerAdminRoutes = (
       return reply.status(201).send(room);
     }
   );
+
+  app.patch(
+    "/admin/rooms/:id",
+    {
+      schema: {
+        tags: ["admin"],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string" }
+          }
+        },
+        body: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string", minLength: 1 }
+          }
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              id: { type: "string" }
+            }
+          },
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          403: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          }
+        }
+      }
+    },
+    async (request, reply) => {
+      const role = request.headers["x-role"];
+      const params = request.params as { id?: string };
+      const body = request.body as { id?: string };
+
+      if (!ensureAdmin(role)) {
+        return reply.status(403).send({ message: "Forbidden" });
+      }
+
+      if (!isNonEmptyString(params.id) || !isNonEmptyString(body.id)) {
+        return reply.status(400).send({ message: "Invalid payload" });
+      }
+
+      const updated = await roomRepository.updateId(params.id, body.id);
+
+      if (!updated) {
+        return reply.status(404).send({ message: "Room not found" });
+      }
+
+      return reply.status(200).send(updated);
+    }
+  );
 };

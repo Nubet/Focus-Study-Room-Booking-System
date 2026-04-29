@@ -17,4 +17,15 @@ export class InMemoryRoomRepository {
   async save(room: Room): Promise<void> {
     this.rooms.push(room);
   }
+
+  async updateId(currentId: string, nextId: string): Promise<Room | null> {
+    const room = this.rooms.find((item) => item.id === currentId);
+
+    if (!room) {
+      return null;
+    }
+
+    room.id = nextId;
+    return room;
+  }
 }
