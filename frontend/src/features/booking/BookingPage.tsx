@@ -258,11 +258,12 @@ export function BookingPage({
         <div className="mx-auto max-w-2xl brutal-border bg-white p-5">
           <p className="mb-3 text-sm font-black uppercase tracking-wider">Confirm reservation</p>
           <div className="space-y-2 text-sm font-semibold">
-            <p><span className="font-black">Room:</span> {selectedRoomId || '-'}</p>
+            <p><span className="font-black">Room:</span> {selectedRoomId || '-'} {selectedRoomId && `(${buildings.find((b) => b.code === splitRoomId(selectedRoomId).buildingCode)?.name || 'Unknown building'})`}</p>
             <p><span className="font-black">User:</span> {userId}</p>
             <p><span className="font-black">Day:</span> {createReservation.day}</p>
             <p><span className="font-black">Start:</span> {createReservation.startTime}</p>
             <p><span className="font-black">End:</span> {createReservation.endTime}</p>
+            <p><span className="font-black">Total duration:</span> {parseInt(createReservation.endTime, 10) - parseInt(createReservation.startTime, 10)} {parseInt(createReservation.endTime, 10) - parseInt(createReservation.startTime, 10) === 1 ? 'hour' : 'hours'}</p>
           </div>
           <form className="mt-4" onSubmit={createNewReservation}>
             <label className={labelClass}>Reservation ID (locked, auto-generated)</label>
