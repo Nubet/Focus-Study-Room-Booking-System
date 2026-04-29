@@ -272,6 +272,87 @@ describe("admin access guard", () => {
     expect(statuses.every((status: string) => status === "CANCELLED")).toBe(true);
   });
 
+  it("filters reservations by roomId for admin role", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-room-1",
+        roomId: "room-a",
+        userId: "user-room-a",
+        startTime: "2026-05-11T09:00:00.000Z",
+        endTime: "2026-05-11T10:00:00.000Z"
+      }
+    });
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-room-2",
+        roomId: "room-b",
+        userId: "user-room-b",
+        startTime: "2026-05-11T10:00:00.000Z",
+        endTime: "2026-05-11T11:00:00.000Z"
+      }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/admin/reservations?roomId=room-a",
+      headers: {
+        "x-role": "ADMIN"
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const roomIds = response.json().map((item: { roomId: string }) => item.roomId);
+    expect(roomIds.every((roomId: string) => roomId === "room-a")).toBe(true);
+  });
+
+  it("filters reservations by from and to date range for admin role", async () => {
+    const app = buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-range-1",
+        roomId: "room-a",
+        userId: "user-range-1",
+        startTime: "2026-05-12T08:00:00.000Z",
+        endTime: "2026-05-12T09:00:00.000Z"
+      }
+    });
+
+    await app.inject({
+      method: "POST",
+      url: "/reservations",
+      payload: {
+        id: "res-admin-range-2",
+        roomId: "room-a",
+        userId: "user-range-2",
+        startTime: "2026-05-12T12:00:00.000Z",
+        endTime: "2026-05-12T13:00:00.000Z"
+      }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/admin/reservations?from=2026-05-12T07:30:00.000Z&to=2026-05-12T10:30:00.000Z",
+      headers: {
+        "x-role": "ADMIN"
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const ids = response.json().map((item: { id: string }) => item.id);
+    expect(ids).toContain("res-admin-range-1");
+    expect(ids).not.toContain("res-admin-range-2");
+  });
+
   it("updates reservation status for admin role", async () => {
     const app = buildApp();
 
