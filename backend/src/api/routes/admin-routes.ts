@@ -92,7 +92,8 @@ export const registerAdminRoutes = (
           required: ["id"],
           properties: {
             id: { type: "string", minLength: 1 }
-          }
+          },
+          examples: [{ id: "room-z" }]
         },
         response: {
           201: {
@@ -159,7 +160,8 @@ export const registerAdminRoutes = (
           required: ["id"],
           properties: {
             id: { type: "string", minLength: 1 }
-          }
+          },
+          examples: [{ id: "room-z-updated" }]
         },
         response: {
           200: {
@@ -374,7 +376,8 @@ export const registerAdminRoutes = (
               type: "string",
               enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
             }
-          }
+          },
+          examples: [{ status: "COMPLETED" }]
         },
         response: {
           200: {
