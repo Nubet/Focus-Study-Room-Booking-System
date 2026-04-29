@@ -46,7 +46,7 @@ export const buildApp = () => {
 
     registerReservationsRoutes(instance, reservationRepository);
     registerRoomsRoutes(instance, roomRepository, reservationRepository);
-    registerAdminRoutes(instance, roomRepository);
+    registerAdminRoutes(instance, roomRepository, reservationRepository);
   });
 
   return app;

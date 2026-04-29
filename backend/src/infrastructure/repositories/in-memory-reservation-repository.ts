@@ -1,5 +1,9 @@
 import { Reservation } from "../../domain/entities/reservation.js";
 
+type ReservationFilter = {
+  status?: Reservation["status"];
+};
+
 export class InMemoryReservationRepository {
   private readonly items = new Map<string, Reservation>();
 
@@ -38,5 +42,15 @@ export class InMemoryReservationRepository {
       (item) =>
         this.isBlockingStatus(item.status) && item.startTime < endTime && item.endTime > startTime
     );
+  }
+
+  async findAll(filter: ReservationFilter = {}): Promise<Reservation[]> {
+    const items = Array.from(this.items.values());
+
+    if (!filter.status) {
+      return items;
+    }
+
+    return items.filter((item) => item.status === filter.status);
   }
 }

@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { InMemoryRoomRepository } from "../../infrastructure/repositories/in-memory-room-repository.js";
+import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
 import { isNonEmptyString } from "./query-validators.js";
 
 const isAdminRole = (value: unknown): boolean => value === "ADMIN";
@@ -8,7 +9,8 @@ const ensureAdmin = (role: unknown): boolean => isAdminRole(role);
 
 export const registerAdminRoutes = (
   app: FastifyInstance,
-  roomRepository: InMemoryRoomRepository
+  roomRepository: InMemoryRoomRepository,
+  reservationRepository: InMemoryReservationRepository
 ): void => {
   app.get(
     "/admin/rooms",
@@ -230,6 +232,60 @@ export const registerAdminRoutes = (
       }
 
       return reply.status(204).send();
+    }
+  );
+
+  app.get(
+    "/admin/reservations",
+    {
+      schema: {
+        tags: ["admin"],
+        querystring: {
+          type: "object",
+          properties: {
+            status: {
+              type: "string",
+              enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
+            }
+          }
+        },
+        response: {
+          200: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                roomId: { type: "string" },
+                userId: { type: "string" },
+                startTime: { type: "string", format: "date-time" },
+                endTime: { type: "string", format: "date-time" },
+                status: {
+                  type: "string",
+                  enum: ["RESERVED", "OCCUPIED", "NO_SHOW_RELEASED", "CANCELLED", "COMPLETED"]
+                }
+              }
+            }
+          },
+          403: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          }
+        }
+      }
+    },
+    async (request, reply) => {
+      const role = request.headers["x-role"];
+      const query = request.query as { status?: "RESERVED" | "OCCUPIED" | "NO_SHOW_RELEASED" | "CANCELLED" | "COMPLETED" };
+
+      if (!ensureAdmin(role)) {
+        return reply.status(403).send({ message: "Forbidden" });
+      }
+
+      const reservations = await reservationRepository.findAll({ status: query.status });
+      return reply.status(200).send(reservations);
     }
   );
 };
