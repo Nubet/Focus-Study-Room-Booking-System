@@ -142,4 +142,32 @@ describe("admin access guard", () => {
 
     expect(response.statusCode).toBe(400);
   });
+
+  it("deletes room for admin role", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "DELETE",
+      url: "/admin/rooms/room-c",
+      headers: {
+        "x-role": "ADMIN"
+      }
+    });
+
+    expect(response.statusCode).toBe(204);
+  });
+
+  it("returns 404 when deleting missing room", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "DELETE",
+      url: "/admin/rooms/missing-room",
+      headers: {
+        "x-role": "ADMIN"
+      }
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
 });
