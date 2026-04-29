@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import { registerAdminRoutes } from "./api/routes/admin-routes.js";
@@ -11,6 +12,11 @@ export const buildApp = () => {
   const app = Fastify();
   const reservationRepository = new InMemoryReservationRepository();
   const roomRepository = new InMemoryRoomRepository();
+
+  app.register(cors, {
+    origin: true,
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
+  });
 
   app.register(swagger, {
     openapi: {
