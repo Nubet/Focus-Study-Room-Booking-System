@@ -38,9 +38,16 @@ export const registerAdminRoutes = (
   roomRepository: InMemoryRoomRepository,
   reservationRepository: InMemoryReservationRepository
 ): void => {
+  const preValidateAdmin = async (request: any, reply: any) => {
+    if (!ensureAdmin(request.headers["x-role"])) {
+      return reply.status(403).send({ message: "Forbidden" });
+    }
+  };
+
   app.get(
     "/admin/rooms",
     {
+      preValidation: preValidateAdmin,
       schema: {
         tags: ["admin"],
         response: {
@@ -68,13 +75,7 @@ export const registerAdminRoutes = (
         }
       }
     },
-    async (request, reply) => {
-      const role = request.headers["x-role"];
-
-      if (!ensureAdmin(role)) {
-        return reply.status(403).send({ message: "Forbidden" });
-      }
-
+    async (_request, reply) => {
       const rooms = await roomRepository.findAll();
       return reply.status(200).send(rooms);
     }
@@ -83,6 +84,7 @@ export const registerAdminRoutes = (
   app.post(
     "/admin/rooms",
     {
+      preValidation: preValidateAdmin,
       schema: {
         tags: ["admin"],
         body: {
@@ -121,12 +123,7 @@ export const registerAdminRoutes = (
       }
     },
     async (request, reply) => {
-      const role = request.headers["x-role"];
       const body = request.body as { id?: string };
-
-      if (!ensureAdmin(role)) {
-        return reply.status(403).send({ message: "Forbidden" });
-      }
 
       if (!isNonEmptyString(body.id)) {
         return reply.status(400).send({ message: "Invalid payload" });
@@ -147,6 +144,7 @@ export const registerAdminRoutes = (
   app.patch(
     "/admin/rooms/:id",
     {
+      preValidation: preValidateAdmin,
       schema: {
         tags: ["admin"],
         params: {
@@ -198,13 +196,8 @@ export const registerAdminRoutes = (
       }
     },
     async (request, reply) => {
-      const role = request.headers["x-role"];
       const params = request.params as { id?: string };
       const body = request.body as { id?: string };
-
-      if (!ensureAdmin(role)) {
-        return reply.status(403).send({ message: "Forbidden" });
-      }
 
       if (!isNonEmptyString(params.id) || !isNonEmptyString(body.id)) {
         return reply.status(400).send({ message: "Invalid payload" });
@@ -231,6 +224,7 @@ export const registerAdminRoutes = (
   app.delete(
     "/admin/rooms/:id",
     {
+      preValidation: preValidateAdmin,
       schema: {
         tags: ["admin"],
         params: {
@@ -266,12 +260,7 @@ export const registerAdminRoutes = (
       }
     },
     async (request, reply) => {
-      const role = request.headers["x-role"];
       const params = request.params as { id?: string };
-
-      if (!ensureAdmin(role)) {
-        return reply.status(403).send({ message: "Forbidden" });
-      }
 
       if (!isNonEmptyString(params.id)) {
         return reply.status(404).send({ message: "Room not found" });
@@ -290,6 +279,7 @@ export const registerAdminRoutes = (
   app.get(
     "/admin/reservations",
     {
+      preValidation: preValidateAdmin,
       schema: {
         tags: ["admin"],
         querystring: {
@@ -338,17 +328,12 @@ export const registerAdminRoutes = (
       }
     },
     async (request, reply) => {
-      const role = request.headers["x-role"];
       const query = request.query as {
         status?: "RESERVED" | "OCCUPIED" | "NO_SHOW_RELEASED" | "CANCELLED" | "COMPLETED";
         roomId?: string;
         from?: string;
         to?: string;
       };
-
-      if (!ensureAdmin(role)) {
-        return reply.status(403).send({ message: "Forbidden" });
-      }
 
       if (query.from && !isValidDateString(query.from)) {
         return reply.status(400).send({ message: "Invalid query" });
@@ -371,6 +356,7 @@ export const registerAdminRoutes = (
   app.patch(
     "/admin/reservations/:id/status",
     {
+      preValidation: preValidateAdmin,
       schema: {
         tags: ["admin"],
         params: {
@@ -429,13 +415,8 @@ export const registerAdminRoutes = (
       }
     },
     async (request, reply) => {
-      const role = request.headers["x-role"];
       const params = request.params as { id?: string };
       const body = request.body as { status?: string };
-
-      if (!ensureAdmin(role)) {
-        return reply.status(403).send({ message: "Forbidden" });
-      }
 
       if (!isNonEmptyString(params.id) || !isReservationStatus(body.status)) {
         return reply.status(400).send({ message: "Invalid payload" });
