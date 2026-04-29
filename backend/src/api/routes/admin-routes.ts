@@ -18,6 +18,21 @@ const isReservationStatus = (value: unknown): value is ReservationStatus => {
   );
 };
 
+const isAllowedReservationTransition = (
+  currentStatus: ReservationStatus,
+  nextStatus: ReservationStatus
+): boolean => {
+  const transitions: Record<ReservationStatus, ReservationStatus[]> = {
+    RESERVED: ["OCCUPIED", "CANCELLED", "NO_SHOW_RELEASED", "COMPLETED"],
+    OCCUPIED: ["COMPLETED", "CANCELLED"],
+    NO_SHOW_RELEASED: [],
+    CANCELLED: [],
+    COMPLETED: []
+  };
+
+  return transitions[currentStatus].includes(nextStatus);
+};
+
 export const registerAdminRoutes = (
   app: FastifyInstance,
   roomRepository: InMemoryRoomRepository,
@@ -166,6 +181,12 @@ export const registerAdminRoutes = (
             properties: {
               message: { type: "string" }
             }
+          },
+          409: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
           }
         }
       }
@@ -216,6 +237,12 @@ export const registerAdminRoutes = (
             }
           },
           404: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
+          },
+          409: {
             type: "object",
             properties: {
               message: { type: "string" }
@@ -350,6 +377,12 @@ export const registerAdminRoutes = (
             properties: {
               message: { type: "string" }
             }
+          },
+          409: {
+            type: "object",
+            properties: {
+              message: { type: "string" }
+            }
           }
         }
       }
@@ -371,6 +404,10 @@ export const registerAdminRoutes = (
 
       if (!reservation) {
         return reply.status(404).send({ message: "Reservation not found" });
+      }
+
+      if (!isAllowedReservationTransition(reservation.status, body.status)) {
+        return reply.status(409).send({ message: "Invalid reservation status transition" });
       }
 
       reservation.status = body.status;
