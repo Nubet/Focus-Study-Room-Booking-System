@@ -255,24 +255,54 @@ export function BookingPage({
       ) : null}
 
       {bookingStep === 3 ? (
-        <div className="mx-auto max-w-2xl brutal-border bg-white p-5">
-          <p className="mb-3 text-sm font-black uppercase tracking-wider">Confirm reservation</p>
-          <div className="space-y-2 text-sm font-semibold">
-            <p><span className="font-black">Room:</span> {selectedRoomId || '-'} {selectedRoomId && `(${buildings.find((b) => b.code === splitRoomId(selectedRoomId).buildingCode)?.name || 'Unknown building'})`}</p>
-            <p><span className="font-black">User:</span> {userId}</p>
-            <p><span className="font-black">Day:</span> {createReservation.day}</p>
-            <p><span className="font-black">Start:</span> {createReservation.startTime}</p>
-            <p><span className="font-black">End:</span> {createReservation.endTime}</p>
-            <p><span className="font-black">Total duration:</span> {parseInt(createReservation.endTime, 10) - parseInt(createReservation.startTime, 10)} {parseInt(createReservation.endTime, 10) - parseInt(createReservation.startTime, 10) === 1 ? 'hour' : 'hours'}</p>
+        <div className="mx-auto max-w-lg brutal-border bg-white shadow-brutal">
+          <div className="border-b-[3px] border-dashed border-text-primary bg-brand-accent p-6 text-center">
+            <h3 className="text-2xl font-black uppercase tracking-widest text-text-primary">Booking Ticket</h3>
+            <p className="mt-1 text-xs font-bold uppercase tracking-wider text-text-muted">Final Confirmation</p>
           </div>
-          <form className="mt-4" onSubmit={createNewReservation}>
-            <label className={labelClass}>Reservation ID (locked, auto-generated)</label>
-            <input className={`${inputClass} mb-4 cursor-not-allowed bg-neutral/20`} value={createReservation.id} readOnly disabled />
-            <div className="grid grid-cols-2 gap-2">
-              <button className="btn-brutal bg-white py-3" type="button" onClick={() => setBookingStep(2)}>Back</button>
-              <button className="btn-brutal bg-success py-3 text-white" type="submit">Create booking</button>
+          <div className="p-6 space-y-5 bg-bg-canvas">
+            <div className="flex justify-between border-b-[3px] border-text-primary pb-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Room</p>
+                <p className="text-2xl font-black text-brand-primary leading-none mt-1">{selectedRoomId || '-'}</p>
+                <p className="text-xs font-bold text-text-primary mt-1 max-w-[200px] leading-tight">
+                  {selectedRoomId && (buildings.find((b) => b.code === splitRoomId(selectedRoomId).buildingCode)?.name || 'Unknown building')}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">User</p>
+                <p className="text-lg font-black leading-none mt-1">{userId}</p>
+              </div>
             </div>
-          </form>
+            <div className="flex justify-between border-b-[3px] border-text-primary pb-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Date</p>
+                <p className="text-lg font-black leading-none mt-1">{createReservation.day}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Time Window</p>
+                <p className="text-lg font-black leading-none mt-1">{createReservation.startTime} - {createReservation.endTime}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-sm font-black uppercase tracking-wider">Total Duration</p>
+              <div className="brutal-border bg-brand-primary px-3 py-1 text-lg font-black text-white">
+                {parseInt(createReservation.endTime, 10) - parseInt(createReservation.startTime, 10)} {parseInt(createReservation.endTime, 10) - parseInt(createReservation.startTime, 10) === 1 ? 'HR' : 'HRS'}
+              </div>
+            </div>
+          </div>
+          <div className="border-t-[3px] border-dashed border-text-primary p-6 bg-white">
+            <form onSubmit={createNewReservation}>
+              <div className="mb-5 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Internal ID (Auto-generated)</p>
+                <p className="font-mono text-xs font-semibold text-text-primary mt-1">{createReservation.id}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button className="btn-brutal bg-bg-canvas py-3 font-black uppercase tracking-wider" type="button" onClick={() => setBookingStep(2)}>Back</button>
+                <button className="btn-brutal bg-success py-3 text-white font-black uppercase tracking-wider hover:brightness-110" type="submit">Confirm & Book</button>
+              </div>
+            </form>
+          </div>
         </div>
       ) : null}
     </section>
