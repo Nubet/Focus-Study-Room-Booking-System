@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ListMyReservationsUseCase } from "@src/application/use-cases/list-my-reservations.use-case.js";
-import { Reservation } from "@src/domain/entities/reservation.js";
+import { ListMyReservationsUseCase } from "@src/modules/reservations/application/use-cases/list-my-reservations.use-case.js";
+import { Reservation } from "@src/modules/reservations/domain/entities/reservation.js";
 
 type ReservationRepository = {
   findByUserId: (userId: string) => Promise<Reservation[]>;

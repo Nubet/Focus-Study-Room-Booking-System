@@ -1,8 +1,8 @@
 import { FastifyInstance } from "fastify";
-import { ReservationStatus } from "../../domain/entities/reservation.js";
-import { RoomRepository } from "../../domain/repositories/room-repository.js";
-import { ReservationRepository } from "../../domain/repositories/reservation-repository.js";
-import { isNonEmptyString, isValidDateString } from "./query-validators.js";
+import { ReservationStatus } from "../../../reservations/domain/entities/reservation.js";
+import { RoomRepository } from "../../../rooms/domain/repositories/room-repository.js";
+import { ReservationRepository } from "../../../reservations/domain/repositories/reservation-repository.js";
+import { isNonEmptyString, isValidDateString } from "../../../reservations/api/validators/query-validators.js";
 
 const isAdminRole = (value: unknown): boolean => value === "ADMIN";
 

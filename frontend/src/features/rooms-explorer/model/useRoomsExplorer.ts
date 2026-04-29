@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { Reservation } from '../../../entities/reservation/model/types'
 import type { Room } from '../../../entities/room/model/types'
 import { DAY_RANGE } from '../../../shared/constants/time'
@@ -33,15 +33,15 @@ export function useRoomsExplorer(
   const availableSet = useMemo(() => new Set(availableRooms.map((room) => room.id)), [availableRooms])
   const myBookedSet = useMemo(() => new Set(myBookedRoomIds), [myBookedRoomIds])
 
-  const loadRooms = async (adminHeaders: HeadersInit) => {
+  const loadRooms = useCallback(async (adminHeaders: HeadersInit) => {
     await run(async () => {
       const result = await roomsExplorerApi.getAllRooms(adminHeaders)
       setRooms(result)
       setMessage(`Loaded ${result.length} rooms.`)
     })
-  }
+  }, [run, setMessage])
 
-  const loadAvailableRooms = async (input?: { day?: string; fromTime?: string; toTime?: string }) => {
+  const loadAvailableRooms = useCallback(async (input?: { day?: string; fromTime?: string; toTime?: string }) => {
     await run(async () => {
       const day = input?.day ?? roomsFilter.day
       const fromTime = input?.fromTime ?? roomsFilter.fromTime
@@ -71,9 +71,9 @@ export function useRoomsExplorer(
       setMyBookedRoomIds(Array.from(new Set(mineForRange)))
       setMessage(`Loaded ${available.length} available rooms.`)
     })
-  }
+  }, [roomsFilter.day, roomsFilter.fromTime, roomsFilter.toTime, run, setMessage, userId])
 
-  const loadModeratorReservations = async (
+  const loadModeratorReservations = useCallback(async (
     adminHeaders: HeadersInit,
     filter: { status: string; roomId: string; from: string; to: string }
   ) => {
@@ -88,7 +88,7 @@ export function useRoomsExplorer(
       setAllReservations(result)
       setMessage(`Loaded ${result.length} reservations.`)
     })
-  }
+  }, [run, setMessage])
 
   return {
     rooms,

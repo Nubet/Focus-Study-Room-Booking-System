@@ -1,20 +1,21 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+import { mapApiErrorToMessage } from '../api/mapApiErrorToMessage'
 
 export function useAsyncAction() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('Ready.')
 
-  const run = async (action: () => Promise<void>) => {
+  const run = useCallback(async (action: () => Promise<void>) => {
     try {
       setLoading(true)
       await action()
     } catch (error) {
-      const text = error instanceof Error ? error.message : 'Unknown error'
+      const text = mapApiErrorToMessage(error)
       setMessage(`Error: ${text}`)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   return { loading, message, setMessage, run }
 }

@@ -6,7 +6,7 @@ import {
   ReservationNotFoundError,
   ReservationStateConflictError,
   SlotAlreadyReservedError
-} from "../../domain/errors/reservation-errors.js";
+} from "../../modules/reservations/domain/errors/reservation-errors.js";
 
 type HttpErrorResponse = {
   statusCode: number;

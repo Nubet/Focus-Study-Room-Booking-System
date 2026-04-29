@@ -4,10 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prisma:generate": "prisma generate",
+    "db:push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
-    "dev": "tsx watch src/main.ts",
+    "predev": "npm run prisma:generate && npm run db:push && npm run seed",
+    "dev": "tsx watch src/app/main.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/src/main.js",
+    "start": "node dist/src/app/main.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

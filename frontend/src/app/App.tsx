@@ -11,7 +11,7 @@ export default function App() {
   const [role, setRole] = useState<Role>('USER')
   const [view, setView] = useState<View>('BOOKING')
   const [userId, setUserId] = useState('student-1')
-  const { setMessage, run } = useAsyncAction()
+  const { loading, message, setMessage, run } = useAsyncAction()
 
   const headers = useMemo(
     () => ({ 'x-role': role, ...(role === 'USER' ? { 'x-user-id': userId } : {}) }),
@@ -35,6 +35,32 @@ export default function App() {
     void loadRooms(adminHeaders)
     void loadAvailableRooms()
   }, [adminHeaders])
+
+  useEffect(() => {
+    if (view !== 'MODERATOR') {
+      return
+    }
+
+    void loadModeratorReservations(adminHeaders, {
+      status: '',
+      roomId: '',
+      from: '',
+      to: ''
+    })
+
+    const intervalId = window.setInterval(() => {
+      void loadModeratorReservations(adminHeaders, {
+        status: '',
+        roomId: '',
+        from: '',
+        to: ''
+      })
+    }, 5000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [view, adminHeaders, loadModeratorReservations])
 
   const buildingNameByCode = useMemo(
     () => new Map(plCampusBuildings.map((building) => [building.code, building.name])),
@@ -91,6 +117,10 @@ export default function App() {
       </header>
 
       <main className="space-y-6">
+        <div className={`brutal-border px-4 py-3 text-sm font-semibold ${message.startsWith('Error:') ? 'bg-danger text-white' : 'bg-bg-canvas text-text-primary'}`}>
+          {loading ? 'Loading...' : message}
+        </div>
+
         {view === 'BOOKING' ? (
           <BookingPage
             userId={userId}

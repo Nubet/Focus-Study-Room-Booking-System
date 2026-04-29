@@ -4,6 +4,7 @@ import { moderatorApi } from './api/moderator.api'
 import type { Reservation } from '../../entities/reservation/model/types'
 import type { ReservationStatus } from '../../entities/reservation/model/status'
 import type { Room } from '../../entities/room/model/types'
+import { splitRoomId } from '../../shared/utils/roomId'
 
 const statusColorMap: Record<ReservationStatus, string> = {
   RESERVED: 'bg-brand-primary text-white',
@@ -36,10 +37,10 @@ export function ModeratorPage({
   reloadRooms,
   reloadReservations
 }: Props) {
-  const [selectedReservationId, setSelectedReservationId] = useState('')
+  const [expandedReservationId, setExpandedReservationId] = useState('')
   const [selectedRoomId, setSelectedRoomId] = useState('')
   const [adminRoomForm, setAdminRoomForm] = useState({ newId: '', targetId: '' })
-  const [adminStatusForm, setAdminStatusForm] = useState({ reservationId: '', status: 'COMPLETED' as ReservationStatus })
+  const [reservationStatusDrafts, setReservationStatusDrafts] = useState<Record<string, ReservationStatus>>({})
 
   const createRoom = (event: FormEvent) => {
     event.preventDefault()
@@ -83,17 +84,20 @@ export function ModeratorPage({
     })
   }
 
-  const updateReservationStatus = (event: FormEvent) => {
-    event.preventDefault()
-    if (!adminStatusForm.reservationId) {
-      setMessage('Select reservation first.')
-      return
-    }
+  const updateReservationStatus = (reservationId: string, status: ReservationStatus) => {
     run(async () => {
-      await moderatorApi.updateReservationStatus(adminStatusForm.reservationId, adminStatusForm.status, adminHeaders)
-      setMessage('Status updated.')
+      await moderatorApi.updateReservationStatus(reservationId, status, adminHeaders)
+      setMessage(`Status updated: ${reservationId} -> ${status}`)
       await reloadReservations()
     })
+  }
+
+  const getDraftStatus = (reservation: Reservation): ReservationStatus => {
+    return reservationStatusDrafts[reservation.id] ?? reservation.status
+  }
+
+  const setDraftStatus = (reservationId: string, status: ReservationStatus) => {
+    setReservationStatusDrafts((prev) => ({ ...prev, [reservationId]: status }))
   }
 
   return (
@@ -106,7 +110,7 @@ export function ModeratorPage({
       <div className="grid gap-4 xl:grid-cols-3">
         <form className="brutal-border bg-white p-4" onSubmit={createRoom}>
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Create room</p>
-          <input className={`${inputClass} mb-3`} value={adminRoomForm.newId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, newId: event.target.value }))} placeholder="A1-120" />
+          <input className={`${inputClass} mb-3`} value={adminRoomForm.newId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, newId: event.target.value }))} placeholder="A10-314" />
           <button className="btn-brutal w-full bg-text-primary py-3 text-white" type="submit">Create</button>
         </form>
         <form className="brutal-border bg-white p-4" onSubmit={renameRoom}>
@@ -132,7 +136,11 @@ export function ModeratorPage({
               className={`w-full brutal-border bg-white p-3 text-left ${selectedRoomId === room.id ? 'bg-brand-accent' : ''}`}
               onClick={() => setSelectedRoomId(room.id)}
             >
-              <p className="font-black">{room.id}</p>
+              <p className="font-black">
+                <span className="text-brand-primary">{splitRoomId(room.id).buildingCode}</span>
+                <span>-</span>
+                <span className="text-danger">{splitRoomId(room.id).roomNumber}</span>
+              </p>
             </button>
           ))}
         </div>
@@ -143,28 +151,58 @@ export function ModeratorPage({
           <p className="mb-2 text-sm font-black uppercase tracking-wider">Reservations</p>
           <div className="max-h-72 space-y-2 overflow-auto pr-1">
             {reservations.map((reservation) => (
-              <button key={reservation.id} type="button" className={`w-full brutal-border bg-white p-3 text-left ${selectedReservationId === reservation.id ? 'bg-brand-accent' : ''}`} onClick={() => { setSelectedReservationId(reservation.id); setAdminStatusForm({ reservationId: reservation.id, status: reservation.status }) }}>
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="font-black">{reservation.id}</span>
-                  <span className={`px-2 py-0.5 text-[10px] font-black uppercase ${statusColorMap[reservation.status]}`}>{reservation.status}</span>
-                </div>
-                <p className="text-xs font-semibold text-text-muted">{reservation.roomId} · {reservation.userId}</p>
-              </button>
+              <div key={reservation.id} className="brutal-border bg-white p-3">
+                <button
+                  type="button"
+                  className="w-full text-left"
+                  onClick={() => setExpandedReservationId((prev) => (prev === reservation.id ? '' : reservation.id))}
+                >
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="font-black">{reservation.id}</span>
+                    <span className={`px-2 py-0.5 text-[10px] font-black uppercase ${statusColorMap[reservation.status]}`}>{reservation.status}</span>
+                  </div>
+                  <p className="text-xs font-semibold text-text-muted">{reservation.roomId} · {reservation.userId}</p>
+                </button>
+
+                {expandedReservationId === reservation.id ? (
+                  <div className="mt-3 border-t-[3px] border-text-primary pt-3">
+                    <p className="text-xs font-semibold text-text-muted">
+                      {new Date(reservation.startTime).toLocaleString()} - {new Date(reservation.endTime).toLocaleString()}
+                    </p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <select
+                        className={inputClass}
+                        value={getDraftStatus(reservation)}
+                        onChange={(event) => setDraftStatus(reservation.id, event.target.value as ReservationStatus)}
+                      >
+                        <option value="RESERVED">RESERVED</option>
+                        <option value="OCCUPIED">OCCUPIED</option>
+                        <option value="NO_SHOW_RELEASED">NO_SHOW_RELEASED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                      </select>
+                      <button
+                        className="btn-brutal bg-danger px-4 py-2 text-white"
+                        type="button"
+                        onClick={() => updateReservationStatus(reservation.id, getDraftStatus(reservation))}
+                      >
+                        Update
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             ))}
           </div>
         </div>
-        <form className="brutal-border bg-white p-4" onSubmit={updateReservationStatus}>
-          <p className="mb-2 text-sm font-black uppercase tracking-wider">Update reservation status</p>
-          <input className={`${inputClass} mb-2`} value={adminStatusForm.reservationId} onChange={(event) => setAdminStatusForm((prev) => ({ ...prev, reservationId: event.target.value }))} placeholder="Reservation ID" />
-          <select className={`${inputClass} mb-3`} value={adminStatusForm.status} onChange={(event) => setAdminStatusForm((prev) => ({ ...prev, status: event.target.value as ReservationStatus }))}>
-            <option value="RESERVED">RESERVED</option>
-            <option value="OCCUPIED">OCCUPIED</option>
-            <option value="NO_SHOW_RELEASED">NO_SHOW_RELEASED</option>
-            <option value="CANCELLED">CANCELLED</option>
-            <option value="COMPLETED">COMPLETED</option>
-          </select>
-          <button className="btn-brutal w-full bg-danger py-3 text-white" type="submit">Update status</button>
-        </form>
+        <div className="brutal-border bg-white p-4">
+          <p className="mb-2 text-sm font-black uppercase tracking-wider">How to manage</p>
+          <ol className="space-y-2 text-sm font-semibold text-text-muted">
+            <li>1. Click any reservation row to expand it.</li>
+            <li>2. Select a new status from the dropdown.</li>
+            <li>3. Click Update to save changes.</li>
+          </ol>
+        </div>
       </div>
     </section>
   )

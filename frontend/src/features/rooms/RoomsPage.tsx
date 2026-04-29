@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { Room } from '../../entities/room/model/types'
 import type { RoomSort, RoomStatusFilter } from '../../shared/types/common'
 import { TIME_OPTIONS } from '../../shared/constants/time'
+import { splitRoomId } from '../../shared/utils/roomId'
 
 type BuildingMap = Map<string, string>
 
@@ -53,8 +54,21 @@ export function RoomsPage({
   loadAvailableRooms,
   dayOptions
 }: Props) {
+  const roomIdCollator = useMemo(() => new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }), [])
   const [selectedRoomId, setSelectedRoomId] = useState('')
   const detailsRef = useRef<HTMLDivElement | null>(null)
+
+  const fromTimeOptions = useMemo(() => {
+    const endIndex = TIME_OPTIONS.indexOf(roomsFilter.toTime)
+    if (endIndex <= 0) return TIME_OPTIONS.slice(0, -1)
+    return TIME_OPTIONS.slice(0, endIndex)
+  }, [roomsFilter.toTime])
+
+  const toTimeOptions = useMemo(() => {
+    const startIndex = TIME_OPTIONS.indexOf(roomsFilter.fromTime)
+    if (startIndex === -1 || startIndex >= TIME_OPTIONS.length - 1) return TIME_OPTIONS.slice(1)
+    return TIME_OPTIONS.slice(startIndex + 1)
+  }, [roomsFilter.fromTime])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -68,20 +82,30 @@ export function RoomsPage({
     .filter((room) => {
       const [buildingCode] = room.id.split('-')
       if (roomsFilter.buildingCode !== 'ALL' && buildingCode !== roomsFilter.buildingCode) return false
-      const roomLabel = `${room.id} ${(buildingNameByCode.get(buildingCode) ?? '').toLowerCase()}`
-      if (roomsFilter.query && !roomLabel.toLowerCase().includes(roomsFilter.query.toLowerCase())) return false
+      if (roomsFilter.query) {
+        const query = roomsFilter.query.toLowerCase().trim()
+        const buildingName = (buildingNameByCode.get(buildingCode) ?? '').toLowerCase()
+        const isIdMatch = room.id.toLowerCase().startsWith(query)
+        const isNameMatch = buildingName.startsWith(query) || buildingName.includes(` ${query}`)
+        if (!isIdMatch && !isNameMatch) return false
+      }
       const isAvailable = availableSet.has(room.id)
       if (roomsFilter.status === 'AVAILABLE' && !isAvailable) return false
       if (roomsFilter.status === 'UNAVAILABLE' && isAvailable) return false
       return true
     })
     .sort((a, b) => {
-      if (roomsFilter.sort === 'ROOM_ASC') return a.id.localeCompare(b.id)
-      if (roomsFilter.sort === 'ROOM_DESC') return b.id.localeCompare(a.id)
-      const [ab] = a.id.split('-')
-      const [bb] = b.id.split('-')
-      if (ab === bb) return a.id.localeCompare(b.id)
-      return ab.localeCompare(bb)
+      if (roomsFilter.sort === 'ROOM_ASC') return roomIdCollator.compare(a.id, b.id)
+      if (roomsFilter.sort === 'ROOM_DESC') return roomIdCollator.compare(b.id, a.id)
+
+      const [buildingCodeA] = a.id.split('-')
+      const [buildingCodeB] = b.id.split('-')
+      const buildingNameA = buildingNameByCode.get(buildingCodeA) ?? buildingCodeA
+      const buildingNameB = buildingNameByCode.get(buildingCodeB) ?? buildingCodeB
+      const byBuildingName = buildingNameA.localeCompare(buildingNameB, undefined, { sensitivity: 'base' })
+
+      if (byBuildingName !== 0) return byBuildingName
+      return roomIdCollator.compare(a.id, b.id)
     })
 
   const selectedRoom = useMemo(
@@ -108,7 +132,7 @@ export function RoomsPage({
         <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={loadAvailableRooms}>Refresh availability</button>
       </div>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-8">
         <div className="xl:col-span-2">
           <label className={labelClass}>Search room or building</label>
           <input className={inputClass} value={roomsFilter.query} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, query: event.target.value }))} placeholder="A1-120 or chemistry" />
@@ -133,7 +157,7 @@ export function RoomsPage({
           <select className={inputClass} value={roomsFilter.sort} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, sort: event.target.value as RoomSort }))}>
             <option value="ROOM_ASC">Room A-Z</option>
             <option value="ROOM_DESC">Room Z-A</option>
-            <option value="BUILDING">Building</option>
+            <option value="BUILDING">Building (A-Z)</option>
           </select>
         </div>
         <div>
@@ -144,14 +168,34 @@ export function RoomsPage({
         </div>
         <div>
           <label className={labelClass}>From hour</label>
-          <select className={inputClass} value={roomsFilter.fromTime} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, fromTime: event.target.value }))}>
-            {TIME_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}
+          <select
+            className={inputClass}
+            value={roomsFilter.fromTime}
+            onChange={(event) => {
+              const nextFrom = event.target.value
+              setRoomsFilter((prev) => {
+                const nextTo = nextFrom >= prev.toTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextFrom) + 1] : prev.toTime
+                return { ...prev, fromTime: nextFrom, toTime: nextTo }
+              })
+            }}
+          >
+            {fromTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
           </select>
         </div>
         <div>
           <label className={labelClass}>To hour</label>
-          <select className={inputClass} value={roomsFilter.toTime} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, toTime: event.target.value }))}>
-            {TIME_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}
+          <select
+            className={inputClass}
+            value={roomsFilter.toTime}
+            onChange={(event) => {
+              const nextTo = event.target.value
+              setRoomsFilter((prev) => {
+                const nextFrom = nextTo <= prev.fromTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextTo) - 1] : prev.fromTime
+                return { ...prev, fromTime: nextFrom, toTime: nextTo }
+              })
+            }}
+          >
+            {toTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
           </select>
         </div>
       </div>
@@ -165,7 +209,7 @@ export function RoomsPage({
           <p className="text-sm font-semibold text-text-muted">No rooms found.</p>
         ) : (
           visibleRooms.map((room) => {
-            const [buildingCode] = room.id.split('-')
+            const { buildingCode, roomNumber } = splitRoomId(room.id)
             const isAvailable = availableSet.has(room.id)
             const isBookedByYou = myBookedSet.has(room.id)
             const isSelected = selectedRoomId === room.id
@@ -173,7 +217,11 @@ export function RoomsPage({
             return (
               <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isSelected ? 'bg-brand-primary text-white shadow-brutal-sm' : ''} ${isBookedByYou ? 'bg-state-booked-by-you' : isAvailable ? 'bg-state-available' : 'bg-state-unavailable'}`} onClick={() => handleSelectRoom(room.id)}>
                 <div className="mb-2 h-10 w-10 brutal-border bg-bg-canvas" />
-                <p className="text-lg font-black">{room.id}</p>
+                <p className="text-lg font-black">
+                  <span className={isSelected ? 'text-white' : 'text-brand-primary'}>{buildingCode}</span>
+                  <span>-</span>
+                  <span className={isSelected ? 'text-white' : 'text-danger'}>{roomNumber}</span>
+                </p>
                 <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-text-muted'}`}>{buildingNameByCode.get(buildingCode) ?? 'Unknown building'}</p>
                 <p className="mt-2 text-[11px] font-black uppercase tracking-wider">{isBookedByYou ? 'Booked by you' : isAvailable ? 'Available' : 'Unavailable'}</p>
               </button>

@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { buildApp } from "./app.js";
-import { PrismaReservationRepository } from "./infrastructure/repositories/prisma-reservation-repository.js";
-import { PrismaRoomRepository } from "./infrastructure/repositories/prisma-room-repository.js";
+import { buildApp } from "./build-app.js";
+import { PrismaReservationRepository } from "../modules/reservations/infrastructure/repositories/prisma-reservation-repository.js";
+import { PrismaRoomRepository } from "../modules/rooms/infrastructure/repositories/prisma-room-repository.js";
 
 const start = async () => {
   const prisma = new PrismaClient();

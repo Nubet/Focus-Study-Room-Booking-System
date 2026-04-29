@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CancelReservationUseCase } from "@src/application/use-cases/cancel-reservation.use-case.js";
-import { Reservation } from "@src/domain/entities/reservation.js";
+import { CancelReservationUseCase } from "@src/modules/reservations/application/use-cases/cancel-reservation.use-case.js";
+import { Reservation } from "@src/modules/reservations/domain/entities/reservation.js";
 
 type ReservationRepository = {
   findById: (id: string) => Promise<Reservation | null>;

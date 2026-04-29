@@ -4,7 +4,7 @@ import {
   ReservationNotFoundError,
   ReservationStateConflictError
 } from "../../domain/errors/reservation-errors.js";
-import { verifySignedQrPayload } from "../security/qr-signed-payload-verifier.js";
+import { verifySignedQrPayload } from "../../../../shared/security/qr-signed-payload-verifier.js";
 
 type CheckInMethod = "PIN" | "QR";
 

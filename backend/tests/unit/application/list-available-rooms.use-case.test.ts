@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ListAvailableRoomsUseCase } from "@src/application/use-cases/list-available-rooms.use-case.js";
-import { Reservation } from "@src/domain/entities/reservation.js";
+import { ListAvailableRoomsUseCase } from "@src/modules/rooms/application/use-cases/list-available-rooms.use-case.js";
+import { Reservation } from "@src/modules/reservations/domain/entities/reservation.js";
 
 type Room = {
   id: string;
