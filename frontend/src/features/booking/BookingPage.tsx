@@ -136,7 +136,10 @@ export function BookingPage({
     <section className={panelClass}>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <h2 className="mr-auto text-2xl font-black uppercase tracking-tight">Booking Wizard</h2>
-        <input className="w-[180px] brutal-border bg-white px-3 py-2 text-xs font-semibold" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
+        <div className="flex items-center gap-2 bg-bg-canvas px-3 py-1 brutal-border">
+          <label htmlFor="simulate-login" className="text-xs font-bold uppercase tracking-wider text-text-muted">Simulate login as:</label>
+          <input id="simulate-login" className="w-[140px] brutal-border bg-white px-2 py-1 text-xs font-semibold" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
+        </div>
         <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => loadAvailableRooms({ day: createReservation.day, fromTime: createReservation.startTime, toTime: createReservation.endTime })}>Load available rooms</button>
       </div>
 
