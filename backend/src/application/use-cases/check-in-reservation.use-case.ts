@@ -38,6 +38,14 @@ export class CheckInReservationUseCase {
       throw new InvalidAccessCodeError();
     }
 
+    const now = new Date();
+    const windowStart = reservation.startTime;
+    const windowEnd = new Date(reservation.startTime.getTime() + 10 * 60 * 1000);
+
+    if (now < windowStart || now > windowEnd) {
+      throw new InvalidAccessCodeError();
+    }
+
     if (input.method === "PIN" && input.code !== "123456") {
       throw new InvalidAccessCodeError();
     }

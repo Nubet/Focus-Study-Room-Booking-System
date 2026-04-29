@@ -12,9 +12,18 @@ const createSignedQrPayload = (payload: Record<string, unknown>, secret: string)
   return `${content}.${signature}`;
 };
 
+const createActiveReservationWindow = (): { startTime: string; endTime: string } => {
+  const now = Date.now();
+  return {
+    startTime: new Date(now - 60 * 1000).toISOString(),
+    endTime: new Date(now + 59 * 60 * 1000).toISOString()
+  };
+};
+
 describe("check-in route", () => {
   it("returns 200 and occupied status for valid PIN check-in", async () => {
     const app = buildApp();
+    const window = createActiveReservationWindow();
 
     await app.inject({
       method: "POST",
@@ -23,8 +32,8 @@ describe("check-in route", () => {
         id: "res-801",
         roomId: "room-a",
         userId: "user-1",
-        startTime: "2026-05-10T10:00:00.000Z",
-        endTime: "2026-05-10T11:00:00.000Z"
+        startTime: window.startTime,
+        endTime: window.endTime
       }
     });
 
@@ -77,6 +86,7 @@ describe("check-in route", () => {
 
   it("returns 409 for invalid reservation state", async () => {
     const app = buildApp();
+    const window = createActiveReservationWindow();
 
     await app.inject({
       method: "POST",
@@ -85,8 +95,8 @@ describe("check-in route", () => {
         id: "res-802",
         roomId: "room-b",
         userId: "user-2",
-        startTime: "2026-05-10T10:00:00.000Z",
-        endTime: "2026-05-10T11:00:00.000Z"
+        startTime: window.startTime,
+        endTime: window.endTime
       }
     });
 
@@ -110,6 +120,7 @@ describe("check-in route", () => {
 
   it("returns 403 for invalid code", async () => {
     const app = buildApp();
+    const window = createActiveReservationWindow();
 
     await app.inject({
       method: "POST",
@@ -118,8 +129,8 @@ describe("check-in route", () => {
         id: "res-803",
         roomId: "room-c",
         userId: "user-3",
-        startTime: "2026-05-10T10:00:00.000Z",
-        endTime: "2026-05-10T11:00:00.000Z"
+        startTime: window.startTime,
+        endTime: window.endTime
       }
     });
 
@@ -138,6 +149,7 @@ describe("check-in route", () => {
 
   it("returns 200 for valid QR signed payload", async () => {
     const app = buildApp();
+    const window = createActiveReservationWindow();
 
     await app.inject({
       method: "POST",
@@ -146,8 +158,8 @@ describe("check-in route", () => {
         id: "res-804",
         roomId: "room-d",
         userId: "user-4",
-        startTime: "2026-05-10T10:00:00.000Z",
-        endTime: "2026-05-10T11:00:00.000Z"
+        startTime: window.startTime,
+        endTime: window.endTime
       }
     });
 
@@ -179,6 +191,7 @@ describe("check-in route", () => {
 
   it("returns 403 for tampered QR signed payload", async () => {
     const app = buildApp();
+    const window = createActiveReservationWindow();
 
     await app.inject({
       method: "POST",
@@ -187,8 +200,8 @@ describe("check-in route", () => {
         id: "res-805",
         roomId: "room-e",
         userId: "user-5",
-        startTime: "2026-05-10T10:00:00.000Z",
-        endTime: "2026-05-10T11:00:00.000Z"
+        startTime: window.startTime,
+        endTime: window.endTime
       }
     });
 
