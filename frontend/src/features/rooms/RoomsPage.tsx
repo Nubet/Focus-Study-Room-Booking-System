@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { Room } from '../../entities/room/model/types'
 import type { RoomSort, RoomStatusFilter } from '../../shared/types/common'
@@ -34,7 +35,6 @@ type Props = {
   myBookedSet: Set<string>
   loadRooms: () => void
   loadAvailableRooms: () => void
-  onPickRoom: (roomId: string) => void
   dayOptions: Array<{ value: string; label: string }>
 }
 
@@ -51,9 +51,19 @@ export function RoomsPage({
   myBookedSet,
   loadRooms,
   loadAvailableRooms,
-  onPickRoom,
   dayOptions
 }: Props) {
+  const [selectedRoomId, setSelectedRoomId] = useState('')
+  const detailsRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      loadAvailableRooms()
+    }, 350)
+
+    return () => clearTimeout(timeout)
+  }, [roomsFilter.day, roomsFilter.fromTime, roomsFilter.toTime, loadAvailableRooms])
+
   const visibleRooms = [...rooms]
     .filter((room) => {
       const [buildingCode] = room.id.split('-')
@@ -73,6 +83,22 @@ export function RoomsPage({
       if (ab === bb) return a.id.localeCompare(b.id)
       return ab.localeCompare(bb)
     })
+
+  const selectedRoom = useMemo(
+    () => rooms.find((room) => room.id === selectedRoomId) ?? null,
+    [rooms, selectedRoomId]
+  )
+
+  const selectedRoomAvailability = selectedRoom ? availableSet.has(selectedRoom.id) : false
+  const selectedRoomBookedByYou = selectedRoom ? myBookedSet.has(selectedRoom.id) : false
+  const selectedBuildingName = selectedRoom
+    ? buildingNameByCode.get(selectedRoom.id.split('-')[0]) ?? 'Unknown building'
+    : ''
+
+  const handleSelectRoom = (roomId: string) => {
+    setSelectedRoomId(roomId)
+    detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
 
   return (
     <section className={panelClass}>
@@ -130,6 +156,10 @@ export function RoomsPage({
         </div>
       </div>
 
+      <div className="mb-3 text-xs font-black uppercase tracking-wider text-text-muted">
+        {selectedRoom ? `Selected room: ${selectedRoom.id}` : 'Select a room to open details'}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {visibleRooms.length === 0 ? (
           <p className="text-sm font-semibold text-text-muted">No rooms found.</p>
@@ -138,16 +168,36 @@ export function RoomsPage({
             const [buildingCode] = room.id.split('-')
             const isAvailable = availableSet.has(room.id)
             const isBookedByYou = myBookedSet.has(room.id)
+            const isSelected = selectedRoomId === room.id
 
             return (
-              <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isBookedByYou ? 'bg-state-booked-by-you' : isAvailable ? 'bg-state-available' : 'bg-state-unavailable'}`} onClick={() => onPickRoom(room.id)}>
+              <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isSelected ? 'bg-brand-primary text-white shadow-brutal-sm' : ''} ${isBookedByYou ? 'bg-state-booked-by-you' : isAvailable ? 'bg-state-available' : 'bg-state-unavailable'}`} onClick={() => handleSelectRoom(room.id)}>
                 <div className="mb-2 h-10 w-10 brutal-border bg-bg-canvas" />
                 <p className="text-lg font-black">{room.id}</p>
-                <p className="text-xs font-semibold text-text-muted">{buildingNameByCode.get(buildingCode) ?? 'Unknown building'}</p>
+                <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-text-muted'}`}>{buildingNameByCode.get(buildingCode) ?? 'Unknown building'}</p>
                 <p className="mt-2 text-[11px] font-black uppercase tracking-wider">{isBookedByYou ? 'Booked by you' : isAvailable ? 'Available' : 'Unavailable'}</p>
               </button>
             )
           })
+        )}
+      </div>
+
+      <div ref={detailsRef} className="mt-4 brutal-border bg-white p-4">
+        <p className="mb-2 text-sm font-black uppercase tracking-wider">Room details</p>
+        {!selectedRoom ? (
+          <p className="text-sm font-semibold text-text-muted">Select a room card to inspect availability and details.</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1 text-sm font-semibold">
+              <p><span className="font-black">Room:</span> {selectedRoom.id}</p>
+              <p><span className="font-black">Building:</span> {selectedBuildingName}</p>
+              <p><span className="font-black">Time window:</span> {roomsFilter.day} {roomsFilter.fromTime}-{roomsFilter.toTime}</p>
+            </div>
+            <div className="space-y-1 text-sm font-semibold">
+              <p><span className="font-black">Status:</span> {selectedRoomBookedByYou ? 'Booked by you' : selectedRoomAvailability ? 'Available' : 'Unavailable'}</p>
+              <p className="text-xs text-text-muted">Tip: Adjust Day/From/To filters to inspect this room at a different time.</p>
+            </div>
+          </div>
         )}
       </div>
     </section>
