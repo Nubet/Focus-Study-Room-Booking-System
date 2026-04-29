@@ -5,19 +5,14 @@ import { RoomsPage } from '../pages/rooms/RoomsPage'
 import { plCampusBuildings } from '../data/pl-campus-buildings'
 import { useRoomsExplorer, sharedDayOptions } from '../features/rooms-explorer/model/useRoomsExplorer'
 import { useAsyncAction } from '../shared/hooks/useAsyncAction'
-import type { Role, View } from '../shared/types/common'
+import type { View } from '../shared/types/common'
 
 export default function App() {
-  const [role, setRole] = useState<Role>('USER')
   const [view, setView] = useState<View>('BOOKING')
   const [userId, setUserId] = useState('student-1')
   const { loading, message, setMessage, run } = useAsyncAction()
 
-  const headers = useMemo(
-    () => ({ 'x-role': role, ...(role === 'USER' ? { 'x-user-id': userId } : {}) }),
-    [role, userId]
-  )
-  const adminHeaders = useMemo(() => ({ ...headers, 'x-role': 'ADMIN' }), [headers])
+  const adminHeaders = useMemo(() => ({ 'x-role': 'ADMIN', 'x-user-id': userId }), [userId])
 
   const {
     rooms,
@@ -88,12 +83,6 @@ export default function App() {
       <header className="mb-6 bg-bg-surface brutal-border shadow-brutal p-4 md:p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h1 className="mr-auto text-3xl font-black uppercase tracking-tight md:text-4xl">Focus Room - Booking System</h1>
-          <button className={`btn-brutal px-3 py-2 text-xs ${role === 'USER' ? 'bg-brand-primary text-white' : 'bg-white'}`} type="button" onClick={() => setRole('USER')}>
-            User
-          </button>
-          <button className={`btn-brutal px-3 py-2 text-xs ${role === 'ADMIN' ? 'bg-danger text-white' : 'bg-white'}`} type="button" onClick={() => setRole('ADMIN')}>
-            Moderator
-          </button>
         </div>
 
         <nav className="grid grid-cols-3 gap-2">
