@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 export function useAsyncAction() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('Ready.')
 
-  const run = async (action: () => Promise<void>) => {
+  const run = useCallback(async (action: () => Promise<void>) => {
     try {
       setLoading(true)
       await action()
@@ -14,7 +14,7 @@ export function useAsyncAction() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   return { loading, message, setMessage, run }
 }
