@@ -50,6 +50,18 @@ export function BookingPage({
     [rooms, activeBuildingCode]
   )
 
+  const startTimeOptions = useMemo(() => {
+    const endIndex = TIME_OPTIONS.indexOf(createReservation.endTime)
+    if (endIndex <= 0) return TIME_OPTIONS.slice(0, -1)
+    return TIME_OPTIONS.slice(0, endIndex)
+  }, [createReservation.endTime])
+
+  const endTimeOptions = useMemo(() => {
+    const startIndex = TIME_OPTIONS.indexOf(createReservation.startTime)
+    if (startIndex === -1 || startIndex >= TIME_OPTIONS.length - 1) return TIME_OPTIONS.slice(1)
+    return TIME_OPTIONS.slice(startIndex + 1)
+  }, [createReservation.startTime])
+
   const stepStyles = (step: BookingStep) =>
     bookingStep === step ? 'bg-text-primary text-white' : bookingStep > step ? 'bg-success text-white' : 'bg-white text-text-primary'
 
@@ -156,14 +168,34 @@ export function BookingPage({
             </div>
             <div>
               <label className={labelClass}>Start hour</label>
-              <select className={inputClass} value={createReservation.startTime} onChange={(event) => setCreateReservation((prev) => ({ ...prev, startTime: event.target.value }))}>
-                {TIME_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}
+              <select
+                className={inputClass}
+                value={createReservation.startTime}
+                onChange={(event) => {
+                  const nextStart = event.target.value
+                  setCreateReservation((prev) => {
+                    const nextEnd = nextStart >= prev.endTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextStart) + 1] : prev.endTime
+                    return { ...prev, startTime: nextStart, endTime: nextEnd }
+                  })
+                }}
+              >
+                {startTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
               </select>
             </div>
             <div>
               <label className={labelClass}>End hour</label>
-              <select className={inputClass} value={createReservation.endTime} onChange={(event) => setCreateReservation((prev) => ({ ...prev, endTime: event.target.value }))}>
-                {TIME_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}
+              <select
+                className={inputClass}
+                value={createReservation.endTime}
+                onChange={(event) => {
+                  const nextEnd = event.target.value
+                  setCreateReservation((prev) => {
+                    const nextStart = nextEnd <= prev.startTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextEnd) - 1] : prev.startTime
+                    return { ...prev, startTime: nextStart, endTime: nextEnd }
+                  })
+                }}
+              >
+                {endTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
               </select>
             </div>
           </div>

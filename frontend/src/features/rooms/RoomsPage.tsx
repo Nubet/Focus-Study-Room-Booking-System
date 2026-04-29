@@ -56,6 +56,18 @@ export function RoomsPage({
   const [selectedRoomId, setSelectedRoomId] = useState('')
   const detailsRef = useRef<HTMLDivElement | null>(null)
 
+  const fromTimeOptions = useMemo(() => {
+    const endIndex = TIME_OPTIONS.indexOf(roomsFilter.toTime)
+    if (endIndex <= 0) return TIME_OPTIONS.slice(0, -1)
+    return TIME_OPTIONS.slice(0, endIndex)
+  }, [roomsFilter.toTime])
+
+  const toTimeOptions = useMemo(() => {
+    const startIndex = TIME_OPTIONS.indexOf(roomsFilter.fromTime)
+    if (startIndex === -1 || startIndex >= TIME_OPTIONS.length - 1) return TIME_OPTIONS.slice(1)
+    return TIME_OPTIONS.slice(startIndex + 1)
+  }, [roomsFilter.fromTime])
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       loadAvailableRooms()
@@ -144,14 +156,34 @@ export function RoomsPage({
         </div>
         <div>
           <label className={labelClass}>From hour</label>
-          <select className={inputClass} value={roomsFilter.fromTime} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, fromTime: event.target.value }))}>
-            {TIME_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}
+          <select
+            className={inputClass}
+            value={roomsFilter.fromTime}
+            onChange={(event) => {
+              const nextFrom = event.target.value
+              setRoomsFilter((prev) => {
+                const nextTo = nextFrom >= prev.toTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextFrom) + 1] : prev.toTime
+                return { ...prev, fromTime: nextFrom, toTime: nextTo }
+              })
+            }}
+          >
+            {fromTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
           </select>
         </div>
         <div>
           <label className={labelClass}>To hour</label>
-          <select className={inputClass} value={roomsFilter.toTime} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, toTime: event.target.value }))}>
-            {TIME_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}
+          <select
+            className={inputClass}
+            value={roomsFilter.toTime}
+            onChange={(event) => {
+              const nextTo = event.target.value
+              setRoomsFilter((prev) => {
+                const nextFrom = nextTo <= prev.fromTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextTo) - 1] : prev.fromTime
+                return { ...prev, fromTime: nextFrom, toTime: nextTo }
+              })
+            }}
+          >
+            {toTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
           </select>
         </div>
       </div>
