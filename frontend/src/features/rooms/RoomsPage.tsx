@@ -132,7 +132,7 @@ export function RoomsPage({
         <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={loadAvailableRooms}>Refresh availability</button>
       </div>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-8">
         <div className="xl:col-span-2">
           <label className={labelClass}>Search room or building</label>
           <input className={inputClass} value={roomsFilter.query} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, query: event.target.value }))} placeholder="A1-120 or chemistry" />
