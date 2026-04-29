@@ -1,15 +1,15 @@
 import { FastifyInstance } from "fastify";
 import { ListAvailableRoomsUseCase } from "../../application/use-cases/list-available-rooms.use-case.js";
 import { InvalidQueryError } from "../../domain/errors/reservation-errors.js";
-import { InMemoryReservationRepository } from "../../infrastructure/repositories/in-memory-reservation-repository.js";
-import { InMemoryRoomRepository } from "../../infrastructure/repositories/in-memory-room-repository.js";
+import { ReservationRepository } from "../../domain/repositories/reservation-repository.js";
+import { RoomRepository } from "../../domain/repositories/room-repository.js";
 import { mapErrorToResponse } from "../http/map-error-to-response.js";
 import { isValidDateString } from "./query-validators.js";
 
 export const registerRoomsRoutes = (
   app: FastifyInstance,
-  roomRepository: InMemoryRoomRepository,
-  reservationRepository: InMemoryReservationRepository
+  roomRepository: RoomRepository,
+  reservationRepository: ReservationRepository
 ): void => {
   const listAvailableRoomsUseCase = new ListAvailableRoomsUseCase(
     roomRepository,

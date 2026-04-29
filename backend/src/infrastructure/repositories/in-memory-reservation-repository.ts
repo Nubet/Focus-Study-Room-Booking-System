@@ -1,13 +1,9 @@
 import { Reservation } from "../../domain/entities/reservation.js";
 
-type ReservationFilter = {
-  status?: Reservation["status"];
-  roomId?: string;
-  from?: Date;
-  to?: Date;
-};
 
-export class InMemoryReservationRepository {
+import { ReservationRepository, ReservationFilter } from "../../domain/repositories/reservation-repository.js";
+
+export class InMemoryReservationRepository implements ReservationRepository {
   private readonly items = new Map<string, Reservation>();
 
   private isBlockingStatus(status: Reservation["status"]): boolean {
