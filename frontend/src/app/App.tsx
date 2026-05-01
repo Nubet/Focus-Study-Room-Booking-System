@@ -174,7 +174,7 @@ export default function App() {
               Project & implementation:{' '}
               <a
                 className="underline decoration-2 underline-offset-4 transition hover:text-brand-primary"
-                href="https://www.linkedin.com/in/nobert-fila/"
+                href="https://www.linkedin.com/in/norbert-fila/"
                 target="_blank"
                 rel="noreferrer"
               >
