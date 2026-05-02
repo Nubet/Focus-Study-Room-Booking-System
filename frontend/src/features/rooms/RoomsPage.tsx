@@ -7,29 +7,23 @@ import { splitRoomId } from '../../shared/utils/roomId'
 
 type BuildingMap = Map<string, string>
 
+type RoomsFilterState = {
+  query: string
+  buildingCode: string
+  status: RoomStatusFilter
+  sort: RoomSort
+  day: string
+  fromTime: string
+  toTime: string
+}
+
 type Props = {
   panelClass: string
   inputClass: string
   labelClass: string
   rooms: Room[]
-  roomsFilter: {
-    query: string
-    buildingCode: string
-    status: RoomStatusFilter
-    sort: RoomSort
-    day: string
-    fromTime: string
-    toTime: string
-  }
-  setRoomsFilter: Dispatch<SetStateAction<{
-    query: string
-    buildingCode: string
-    status: RoomStatusFilter
-    sort: RoomSort
-    day: string
-    fromTime: string
-    toTime: string
-  }>>
+  roomsFilter: RoomsFilterState
+  setRoomsFilter: Dispatch<SetStateAction<RoomsFilterState>>
   buildingNameByCode: BuildingMap
   buildingOptions: Array<{ code: string }>
   availableSet: Set<string>
@@ -37,6 +31,163 @@ type Props = {
   loadRooms: () => void
   loadAvailableRooms: () => void
   dayOptions: Array<{ value: string; label: string }>
+}
+
+const ROOM_STATUS_FILTERS: RoomStatusFilter[] = ['ALL', 'AVAILABLE', 'UNAVAILABLE']
+const ROOM_SORTS: RoomSort[] = ['ROOM_ASC', 'ROOM_DESC', 'BUILDING']
+
+function isRoomStatusFilter(value: string): value is RoomStatusFilter {
+  return ROOM_STATUS_FILTERS.includes(value as RoomStatusFilter)
+}
+
+function isRoomSort(value: string): value is RoomSort {
+  return ROOM_SORTS.includes(value as RoomSort)
+}
+
+function getVisibleRooms(
+  rooms: Room[],
+  roomsFilter: RoomsFilterState,
+  buildingNameByCode: BuildingMap,
+  availableSet: Set<string>,
+  roomIdCollator: Intl.Collator
+): Room[] {
+  return [...rooms]
+    .filter((room) => {
+      const { buildingCode } = splitRoomId(room.id)
+      if (roomsFilter.buildingCode !== 'ALL' && buildingCode !== roomsFilter.buildingCode) return false
+      if (roomsFilter.query) {
+        const query = roomsFilter.query.toLowerCase().trim()
+        const buildingName = (buildingNameByCode.get(buildingCode) ?? '').toLowerCase()
+        const isIdMatch = room.id.toLowerCase().startsWith(query)
+        const isNameMatch = buildingName.startsWith(query) || buildingName.includes(` ${query}`)
+        if (!isIdMatch && !isNameMatch) return false
+      }
+      const isAvailable = availableSet.has(room.id)
+      if (roomsFilter.status === 'AVAILABLE' && !isAvailable) return false
+      if (roomsFilter.status === 'UNAVAILABLE' && isAvailable) return false
+      return true
+    })
+    .sort((a, b) => {
+      if (roomsFilter.sort === 'ROOM_ASC') return roomIdCollator.compare(a.id, b.id)
+      if (roomsFilter.sort === 'ROOM_DESC') return roomIdCollator.compare(b.id, a.id)
+
+      const { buildingCode: buildingCodeA } = splitRoomId(a.id)
+      const { buildingCode: buildingCodeB } = splitRoomId(b.id)
+      const buildingNameA = buildingNameByCode.get(buildingCodeA) ?? buildingCodeA
+      const buildingNameB = buildingNameByCode.get(buildingCodeB) ?? buildingCodeB
+      const byBuildingName = buildingNameA.localeCompare(buildingNameB, undefined, { sensitivity: 'base' })
+
+      if (byBuildingName !== 0) return byBuildingName
+      return roomIdCollator.compare(a.id, b.id)
+    })
+}
+
+type FiltersProps = {
+  inputClass: string
+  labelClass: string
+  roomsFilter: RoomsFilterState
+  setRoomsFilter: Dispatch<SetStateAction<RoomsFilterState>>
+  buildingOptions: Array<{ code: string }>
+  dayOptions: Array<{ value: string; label: string }>
+  fromTimeOptions: string[]
+  toTimeOptions: string[]
+}
+
+function RoomsFilters({
+  inputClass,
+  labelClass,
+  roomsFilter,
+  setRoomsFilter,
+  buildingOptions,
+  dayOptions,
+  fromTimeOptions,
+  toTimeOptions
+}: FiltersProps) {
+  return (
+    <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+      <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2">
+        <label className={labelClass}>Search room or building</label>
+        <input className={inputClass} value={roomsFilter.query} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, query: event.target.value }))} placeholder="A1-120 or chemistry" />
+      </div>
+      <div>
+        <label className={labelClass}>Building</label>
+        <select className={inputClass} value={roomsFilter.buildingCode} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, buildingCode: event.target.value }))}>
+          <option value="ALL">All</option>
+          {buildingOptions.map((building) => <option key={building.code} value={building.code}>{building.code}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className={labelClass}>Status</label>
+        <select
+          className={inputClass}
+          value={roomsFilter.status}
+          onChange={(event) => {
+            if (!isRoomStatusFilter(event.target.value)) return
+            const nextStatus: RoomStatusFilter = event.target.value
+            setRoomsFilter((prev) => ({ ...prev, status: nextStatus }))
+          }}
+        >
+          <option value="ALL">All</option>
+          <option value="AVAILABLE">Available</option>
+          <option value="UNAVAILABLE">Unavailable</option>
+        </select>
+      </div>
+      <div>
+        <label className={labelClass}>Sort</label>
+        <select
+          className={inputClass}
+          value={roomsFilter.sort}
+          onChange={(event) => {
+            if (!isRoomSort(event.target.value)) return
+            const nextSort: RoomSort = event.target.value
+            setRoomsFilter((prev) => ({ ...prev, sort: nextSort }))
+          }}
+        >
+          <option value="ROOM_ASC">Room A-Z</option>
+          <option value="ROOM_DESC">Room Z-A</option>
+          <option value="BUILDING">Building (A-Z)</option>
+        </select>
+      </div>
+      <div>
+        <label className={labelClass}>Day</label>
+        <select className={inputClass} value={roomsFilter.day} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, day: event.target.value }))}>
+          {dayOptions.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className={labelClass}>From hour</label>
+        <select
+          className={inputClass}
+          value={roomsFilter.fromTime}
+          onChange={(event) => {
+            const nextFrom = event.target.value
+            setRoomsFilter((prev) => {
+              const nextTo = nextFrom >= prev.toTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextFrom) + 1] : prev.toTime
+              return { ...prev, fromTime: nextFrom, toTime: nextTo }
+            })
+          }}
+        >
+          {fromTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className={labelClass}>To hour</label>
+        <select
+          className={inputClass}
+          value={roomsFilter.toTime}
+          onChange={(event) => {
+            const nextTo = event.target.value
+            setRoomsFilter((prev) => {
+              const nextFrom = nextTo <= prev.fromTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextTo) - 1] : prev.fromTime
+              return { ...prev, fromTime: nextFrom, toTime: nextTo }
+            })
+          }}
+        >
+          {toTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
+        </select>
+      </div>
+    </div>
+  )
 }
 
 export function RoomsPage({
@@ -78,35 +229,10 @@ export function RoomsPage({
     return () => clearTimeout(timeout)
   }, [roomsFilter.day, roomsFilter.fromTime, roomsFilter.toTime, loadAvailableRooms])
 
-  const visibleRooms = [...rooms]
-    .filter((room) => {
-      const [buildingCode] = room.id.split('-')
-      if (roomsFilter.buildingCode !== 'ALL' && buildingCode !== roomsFilter.buildingCode) return false
-      if (roomsFilter.query) {
-        const query = roomsFilter.query.toLowerCase().trim()
-        const buildingName = (buildingNameByCode.get(buildingCode) ?? '').toLowerCase()
-        const isIdMatch = room.id.toLowerCase().startsWith(query)
-        const isNameMatch = buildingName.startsWith(query) || buildingName.includes(` ${query}`)
-        if (!isIdMatch && !isNameMatch) return false
-      }
-      const isAvailable = availableSet.has(room.id)
-      if (roomsFilter.status === 'AVAILABLE' && !isAvailable) return false
-      if (roomsFilter.status === 'UNAVAILABLE' && isAvailable) return false
-      return true
-    })
-    .sort((a, b) => {
-      if (roomsFilter.sort === 'ROOM_ASC') return roomIdCollator.compare(a.id, b.id)
-      if (roomsFilter.sort === 'ROOM_DESC') return roomIdCollator.compare(b.id, a.id)
-
-      const [buildingCodeA] = a.id.split('-')
-      const [buildingCodeB] = b.id.split('-')
-      const buildingNameA = buildingNameByCode.get(buildingCodeA) ?? buildingCodeA
-      const buildingNameB = buildingNameByCode.get(buildingCodeB) ?? buildingCodeB
-      const byBuildingName = buildingNameA.localeCompare(buildingNameB, undefined, { sensitivity: 'base' })
-
-      if (byBuildingName !== 0) return byBuildingName
-      return roomIdCollator.compare(a.id, b.id)
-    })
+  const visibleRooms = useMemo(
+    () => getVisibleRooms(rooms, roomsFilter, buildingNameByCode, availableSet, roomIdCollator),
+    [rooms, roomsFilter, buildingNameByCode, availableSet, roomIdCollator]
+  )
 
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === selectedRoomId) ?? null,
@@ -116,7 +242,7 @@ export function RoomsPage({
   const selectedRoomAvailability = selectedRoom ? availableSet.has(selectedRoom.id) : false
   const selectedRoomBookedByYou = selectedRoom ? myBookedSet.has(selectedRoom.id) : false
   const selectedBuildingName = selectedRoom
-    ? buildingNameByCode.get(selectedRoom.id.split('-')[0]) ?? 'Unknown building'
+    ? buildingNameByCode.get(splitRoomId(selectedRoom.id).buildingCode) ?? 'Unknown building'
     : ''
 
   const handleSelectRoom = (roomId: string) => {
@@ -132,73 +258,16 @@ export function RoomsPage({
         <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={loadAvailableRooms}>Refresh availability</button>
       </div>
 
-      <div className="mb-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-        <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2">
-          <label className={labelClass}>Search room or building</label>
-          <input className={inputClass} value={roomsFilter.query} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, query: event.target.value }))} placeholder="A1-120 or chemistry" />
-        </div>
-        <div>
-          <label className={labelClass}>Building</label>
-          <select className={inputClass} value={roomsFilter.buildingCode} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, buildingCode: event.target.value }))}>
-            <option value="ALL">All</option>
-            {buildingOptions.map((building) => <option key={building.code} value={building.code}>{building.code}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Status</label>
-          <select className={inputClass} value={roomsFilter.status} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, status: event.target.value as RoomStatusFilter }))}>
-            <option value="ALL">All</option>
-            <option value="AVAILABLE">Available</option>
-            <option value="UNAVAILABLE">Unavailable</option>
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Sort</label>
-          <select className={inputClass} value={roomsFilter.sort} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, sort: event.target.value as RoomSort }))}>
-            <option value="ROOM_ASC">Room A-Z</option>
-            <option value="ROOM_DESC">Room Z-A</option>
-            <option value="BUILDING">Building (A-Z)</option>
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Day</label>
-          <select className={inputClass} value={roomsFilter.day} onChange={(event) => setRoomsFilter((prev) => ({ ...prev, day: event.target.value }))}>
-            {dayOptions.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>From hour</label>
-          <select
-            className={inputClass}
-            value={roomsFilter.fromTime}
-            onChange={(event) => {
-              const nextFrom = event.target.value
-              setRoomsFilter((prev) => {
-                const nextTo = nextFrom >= prev.toTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextFrom) + 1] : prev.toTime
-                return { ...prev, fromTime: nextFrom, toTime: nextTo }
-              })
-            }}
-          >
-            {fromTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>To hour</label>
-          <select
-            className={inputClass}
-            value={roomsFilter.toTime}
-            onChange={(event) => {
-              const nextTo = event.target.value
-              setRoomsFilter((prev) => {
-                const nextFrom = nextTo <= prev.fromTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextTo) - 1] : prev.fromTime
-                return { ...prev, fromTime: nextFrom, toTime: nextTo }
-              })
-            }}
-          >
-            {toTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
-          </select>
-        </div>
-      </div>
+      <RoomsFilters
+        inputClass={inputClass}
+        labelClass={labelClass}
+        roomsFilter={roomsFilter}
+        setRoomsFilter={setRoomsFilter}
+        buildingOptions={buildingOptions}
+        dayOptions={dayOptions}
+        fromTimeOptions={fromTimeOptions}
+        toTimeOptions={toTimeOptions}
+      />
 
       <div className="mb-3 text-xs font-black uppercase tracking-wider text-text-muted">
         {selectedRoom ? `Selected room: ${selectedRoom.id}` : 'Select a room to open details'}
@@ -216,7 +285,7 @@ export function RoomsPage({
 
             return (
               <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isSelected ? 'bg-brand-primary text-white shadow-brutal-sm' : ''} ${isBookedByYou ? 'bg-state-booked-by-you' : isAvailable ? 'bg-state-available' : 'bg-state-unavailable'}`} onClick={() => handleSelectRoom(room.id)}>
-                <div className="mb-2 h-8 w-8 sm:h-10 sm:w-10 brutal-border bg-bg-canvas" />
+                <div className="mb-2 h-8 w-8 brutal-border bg-bg-canvas sm:h-10 sm:w-10" />
                 <p className="text-lg font-black">
                   <span className={isSelected ? 'text-white' : 'text-brand-primary'}>{buildingCode}</span>
                   <span>-</span>
