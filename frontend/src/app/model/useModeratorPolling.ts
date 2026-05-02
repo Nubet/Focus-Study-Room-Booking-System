@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
+import type { ModeratorReservationFilter } from '../../features/moderator/model/reservationFilter'
 import type { AppView } from '../../shared/types/ui'
 import { EMPTY_MODERATOR_RESERVATION_FILTER } from '../../features/moderator/model/reservationFilter'
 
 type LoadModeratorReservations = (
   adminHeaders: HeadersInit,
-  filter: { status: string; roomId: string; from: string; to: string }
+  filter: ModeratorReservationFilter
 ) => Promise<void>
 
 export function useModeratorPolling(

@@ -6,7 +6,7 @@ import { APP_UI_CLASSES, APP_VIEWS } from './config/ui'
 import { plCampusBuildings } from '../data/pl-campus-buildings'
 import { useInitialDataLoad } from './model/useInitialDataLoad'
 import { useModeratorPolling } from './model/useModeratorPolling'
-import { useRoomsExplorer, sharedDayOptions } from '../features/rooms-explorer/model/useRoomsExplorer'
+import { useRoomsData, sharedDayOptions } from '../features/rooms/model/useRoomsData'
 import { EMPTY_MODERATOR_RESERVATION_FILTER } from '../features/moderator/model/reservationFilter'
 import { useAsyncAction } from '../shared/hooks/useAsyncAction'
 import type { AppView } from '../shared/types/ui'
@@ -28,7 +28,7 @@ export default function App() {
     loadRooms,
     loadAvailableRooms,
     loadModeratorReservations
-  } = useRoomsExplorer(userId, run, setMessage)
+  } = useRoomsData(userId, run, setMessage)
 
   useInitialDataLoad(adminHeaders, loadRooms, loadAvailableRooms)
   useModeratorPolling(view, adminHeaders, loadModeratorReservations)

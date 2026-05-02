@@ -4,18 +4,9 @@ import type { Room } from '../../entities/room/model/types'
 import type { RoomSort, RoomStatusFilter } from '../../shared/types/ui'
 import { TIME_OPTIONS } from '../../shared/constants/time'
 import { splitRoomId } from '../../shared/utils/roomId'
+import type { RoomsFilterState } from './model/types'
 
 type BuildingMap = Map<string, string>
-
-type RoomsFilterState = {
-  query: string
-  buildingCode: string
-  status: RoomStatusFilter
-  sort: RoomSort
-  day: string
-  fromTime: string
-  toTime: string
-}
 
 type Props = {
   panelClass: string
