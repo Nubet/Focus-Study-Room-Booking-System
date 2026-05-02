@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import type { Room } from '../../entities/room/model/types'
-import type { RoomSort, RoomStatusFilter } from '../../shared/types/ui'
-import { TIME_OPTIONS } from '../../shared/constants/time'
-import { splitRoomId } from '../../shared/utils/roomId'
+import type { Room } from '@/entities/room/model/types'
+import { TIME_OPTIONS } from '@/shared/constants/time'
+import type { RoomSort, RoomStatusFilter } from '@/shared/types/ui'
+import { splitRoomId } from '@/shared/utils/roomId'
 import type { RoomsFilterState } from './model/types'
 
 type BuildingMap = Map<string, string>

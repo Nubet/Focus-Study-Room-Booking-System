@@ -1,12 +1,12 @@
 import type { FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import type { Room } from '../../entities/room/model/types'
-import type { AsyncActionRunner } from '../../shared/hooks/useAsyncAction'
-import type { BookingStep } from '../../shared/types/ui'
-import { TIME_OPTIONS } from '../../shared/constants/time'
-import { toIsoDateTime } from '../../shared/utils/dateTime'
-import { splitRoomId } from '../../shared/utils/roomId'
+import type { Room } from '@/entities/room/model/types'
+import type { AsyncActionRunner } from '@/shared/hooks/useAsyncAction'
+import { TIME_OPTIONS } from '@/shared/constants/time'
+import type { BookingStep } from '@/shared/types/ui'
+import { toIsoDateTime } from '@/shared/utils/dateTime'
+import { splitRoomId } from '@/shared/utils/roomId'
 import { bookingApi } from './api/booking.api'
 
 type Building = { code: string; name: string }

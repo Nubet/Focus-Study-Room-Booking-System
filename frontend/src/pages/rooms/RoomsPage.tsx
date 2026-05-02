@@ -1,1 +1,1 @@
-export { RoomsPage } from '../../features/rooms/RoomsPage'
+export { RoomsPage } from '@/features/rooms/RoomsPage'

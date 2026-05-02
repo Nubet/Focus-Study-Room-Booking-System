@@ -1,1 +1,1 @@
-export { ModeratorPage } from '../../features/moderator/ModeratorPage'
+export { ModeratorPage } from '@/features/moderator/ModeratorPage'

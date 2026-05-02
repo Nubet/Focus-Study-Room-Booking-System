@@ -1,1 +1,1 @@
-export { BookingPage } from '../../features/booking/BookingPage'
+export { BookingPage } from '@/features/booking/BookingPage'

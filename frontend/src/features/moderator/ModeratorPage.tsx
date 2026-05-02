@@ -1,12 +1,12 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import type { Reservation } from '../../entities/reservation/model/types'
-import { isReservationStatus, RESERVATION_STATUSES } from '../../entities/reservation/model/status'
-import type { ReservationStatus } from '../../entities/reservation/model/status'
-import type { Room } from '../../entities/room/model/types'
-import type { AsyncActionRunner } from '../../shared/hooks/useAsyncAction'
-import { splitRoomId } from '../../shared/utils/roomId'
+import { isReservationStatus, RESERVATION_STATUSES } from '@/entities/reservation/model/status'
+import type { ReservationStatus } from '@/entities/reservation/model/status'
+import type { Reservation } from '@/entities/reservation/model/types'
+import type { Room } from '@/entities/room/model/types'
+import type { AsyncActionRunner } from '@/shared/hooks/useAsyncAction'
+import { splitRoomId } from '@/shared/utils/roomId'
 import { moderatorApi } from './api/moderator.api'
 
 const statusColorMap: Record<ReservationStatus, string> = {

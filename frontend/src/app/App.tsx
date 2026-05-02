@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
-import { BookingPage } from '../pages/booking/BookingPage'
-import { ModeratorPage } from '../pages/moderator/ModeratorPage'
-import { RoomsPage } from '../pages/rooms/RoomsPage'
+import { plCampusBuildings } from '@/data/pl-campus-buildings'
+import { EMPTY_MODERATOR_RESERVATION_FILTER } from '@/features/moderator/model/reservationFilter'
+import { sharedDayOptions, useRoomsData } from '@/features/rooms/model/useRoomsData'
+import { BookingPage } from '@/pages/booking/BookingPage'
+import { ModeratorPage } from '@/pages/moderator/ModeratorPage'
+import { RoomsPage } from '@/pages/rooms/RoomsPage'
+import { useAsyncAction } from '@/shared/hooks/useAsyncAction'
+import type { AppView } from '@/shared/types/ui'
 import { APP_UI_CLASSES, APP_VIEWS } from './config/ui'
-import { plCampusBuildings } from '../data/pl-campus-buildings'
 import { useInitialDataLoad } from './model/useInitialDataLoad'
 import { useModeratorPolling } from './model/useModeratorPolling'
-import { sharedDayOptions, useRoomsData } from '../features/rooms/model/useRoomsData'
-import { EMPTY_MODERATOR_RESERVATION_FILTER } from '../features/moderator/model/reservationFilter'
-import { useAsyncAction } from '../shared/hooks/useAsyncAction'
-import type { AppView } from '../shared/types/ui'
 
 export default function App() {
   const [view, setView] = useState<AppView>('BOOKING')
