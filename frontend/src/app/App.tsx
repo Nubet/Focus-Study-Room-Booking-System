@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { plCampusBuildings } from '@/data/pl-campus-buildings'
 import { EMPTY_MODERATOR_RESERVATION_FILTER } from '@/features/moderator/model/reservationFilter'
 import { sharedDayOptions, useRoomsData } from '@/features/rooms/model/useRoomsData'
 import { BookingPage } from '@/pages/booking/BookingPage'
@@ -8,6 +7,7 @@ import { RoomsPage } from '@/pages/rooms/RoomsPage'
 import { useAsyncAction } from '@/shared/hooks/useAsyncAction'
 import type { AppView } from '@/shared/types/ui'
 import { APP_UI_CLASSES, APP_VIEWS } from './config/ui'
+import { useBuildingsCatalog } from './model/useBuildingsCatalog'
 import { useInitialDataLoad } from './model/useInitialDataLoad'
 import { useModeratorPolling } from './model/useModeratorPolling'
 
@@ -15,6 +15,7 @@ export default function App() {
   const [view, setView] = useState<AppView>('BOOKING')
   const [userId, setUserId] = useState('student-1')
   const { loading, message, setMessage, run } = useAsyncAction()
+  const { buildings, loadBuildings } = useBuildingsCatalog(run, setMessage)
 
   const adminHeaders = useMemo(() => ({ 'x-role': 'ADMIN', 'x-user-id': userId }), [userId])
 
@@ -30,12 +31,12 @@ export default function App() {
     loadModeratorReservations
   } = useRoomsData(userId, run, setMessage)
 
-  useInitialDataLoad(adminHeaders, loadRooms, loadAvailableRooms)
+  useInitialDataLoad(adminHeaders, loadBuildings, loadRooms, loadAvailableRooms)
   useModeratorPolling(view, adminHeaders, loadModeratorReservations)
 
   const buildingNameByCode = useMemo(
-    () => new Map(plCampusBuildings.map((building) => [building.code, building.name])),
-    []
+    () => new Map(buildings.map((building) => [building.code, building.name])),
+    [buildings]
   )
 
   const { panelClass, inputClass, labelClass } = APP_UI_CLASSES
@@ -92,7 +93,7 @@ export default function App() {
             run={run}
             setMessage={setMessage}
             loadAvailableRooms={loadAvailableRooms}
-            buildings={plCampusBuildings}
+            buildings={buildings}
             panelClass={panelClass}
             inputClass={inputClass}
             labelClass={labelClass}
@@ -108,7 +109,7 @@ export default function App() {
             roomsFilter={roomsFilter}
             setRoomsFilter={setRoomsFilter}
             buildingNameByCode={buildingNameByCode}
-            buildingOptions={plCampusBuildings}
+            buildingOptions={buildings}
             availableSet={availableSet}
             myBookedSet={myBookedSet}
             loadRooms={() => void loadRooms(adminHeaders)}

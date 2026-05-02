@@ -300,7 +300,7 @@ export function BookingPage({
   labelClass
 }: Props) {
   const [bookingStep, setBookingStep] = useState<BookingStep>(1)
-  const [activeBuildingCode, setActiveBuildingCode] = useState('A1')
+  const [activeBuildingCode, setActiveBuildingCode] = useState('')
   const [selectedRoomId, setSelectedRoomId] = useState('')
   const [createReservation, setCreateReservation] = useState<ReservationDraft>(() => ({
     id: createReservationId(),
@@ -309,9 +309,17 @@ export function BookingPage({
     endTime: '10:00'
   }))
 
+  const resolvedActiveBuildingCode = useMemo(() => {
+    const hasActiveBuilding = buildings.some((building) => building.code === activeBuildingCode)
+    if (hasActiveBuilding) {
+      return activeBuildingCode
+    }
+    return buildings[0]?.code ?? ''
+  }, [activeBuildingCode, buildings])
+
   const roomsForActiveBuilding = useMemo(
-    () => rooms.filter((room) => room.id.startsWith(`${activeBuildingCode}-`)).sort((a, b) => a.id.localeCompare(b.id)),
-    [rooms, activeBuildingCode]
+    () => rooms.filter((room) => room.id.startsWith(`${resolvedActiveBuildingCode}-`)).sort((a, b) => a.id.localeCompare(b.id)),
+    [rooms, resolvedActiveBuildingCode]
   )
 
   const startTimeOptions = useMemo(() => {
@@ -417,7 +425,7 @@ export function BookingPage({
           buildings={buildings}
           roomsForActiveBuilding={roomsForActiveBuilding}
           selectedRoomId={selectedRoomId}
-          activeBuildingCode={activeBuildingCode}
+          activeBuildingCode={resolvedActiveBuildingCode}
           setActiveBuildingCode={setActiveBuildingCode}
           onSelectRoom={(roomId) => {
             setSelectedRoomId(roomId)
