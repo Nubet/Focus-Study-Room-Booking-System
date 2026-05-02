@@ -1,1 +1,1 @@
-export { RoomsExplorer as RoomsPage } from '../../features/rooms-explorer/ui/RoomsExplorer'
+export { RoomsPage } from '../../features/rooms/RoomsPage'
