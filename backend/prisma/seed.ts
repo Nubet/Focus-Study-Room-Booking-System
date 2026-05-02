@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { plCampusBuildings } from "../../frontend/src/data/pl-campus-buildings";
+import { plCampusBuildings } from "./campus-buildings.ts";
 
 const prisma = new PrismaClient();
 
@@ -19,6 +19,14 @@ async function main() {
   let poolIndex = 0;
 
   for (const building of plCampusBuildings) {
+    await prisma.building.upsert({
+      where: { code: building.code },
+      update: { name: building.name },
+      create: { code: building.code, name: building.name }
+    });
+  }
+
+  for (const building of plCampusBuildings) {
     for (let i = 0; i < ROOMS_PER_BUILDING; i += 1) {
       const number = ROOM_NUMBERS_POOL[poolIndex];
       poolIndex += 1;
@@ -27,7 +35,7 @@ async function main() {
       await prisma.room.upsert({
         where: { id: roomId },
         update: {},
-        create: { id: roomId },
+        create: { id: roomId, buildingCode: building.code },
       });
       console.log(`Upserted room ${roomId}`);
     }
