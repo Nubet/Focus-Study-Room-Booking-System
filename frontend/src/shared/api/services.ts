@@ -1,5 +1,7 @@
 import { request } from './httpClient'
-import type { Reservation, ReservationStatus, Room } from '../types'
+import type { Reservation } from '../../entities/reservation/model/types'
+import type { ReservationStatus } from '../../entities/reservation/model/status'
+import type { Room } from '../../entities/room/model/types'
 
 export const roomsService = {
   getAll: (headers: HeadersInit) => request<Room[]>('/admin/rooms', { headers }),

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { Room } from '../../entities/room/model/types'
-import type { RoomSort, RoomStatusFilter } from '../../shared/types/common'
+import type { RoomSort, RoomStatusFilter } from '../../shared/types/ui'
 import { TIME_OPTIONS } from '../../shared/constants/time'
 import { splitRoomId } from '../../shared/utils/roomId'
 

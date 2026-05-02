@@ -2,6 +2,7 @@ import type { FormEvent } from 'react'
 import { useState } from 'react'
 import { moderatorApi } from './api/moderator.api'
 import type { Reservation } from '../../entities/reservation/model/types'
+import { isReservationStatus } from '../../entities/reservation/model/status'
 import type { ReservationStatus } from '../../entities/reservation/model/status'
 import type { Room } from '../../entities/room/model/types'
 import { splitRoomId } from '../../shared/utils/roomId'
@@ -100,6 +101,13 @@ export function ModeratorPage({
     setReservationStatusDrafts((prev) => ({ ...prev, [reservationId]: status }))
   }
 
+  const handleDraftStatusChange = (reservationId: string, value: string) => {
+    if (!isReservationStatus(value)) {
+      return
+    }
+    setDraftStatus(reservationId, value)
+  }
+
   return (
     <section className={panelClass}>
       <div className="mb-4 flex flex-wrap gap-2">
@@ -173,7 +181,7 @@ export function ModeratorPage({
                       <select
                         className={`${inputClass} flex-1`}
                         value={getDraftStatus(reservation)}
-                        onChange={(event) => setDraftStatus(reservation.id, event.target.value as ReservationStatus)}
+                        onChange={(event) => handleDraftStatusChange(reservation.id, event.target.value)}
                       >
                         <option value="RESERVED">RESERVED</option>
                         <option value="OCCUPIED">OCCUPIED</option>

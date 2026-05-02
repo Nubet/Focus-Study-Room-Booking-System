@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { roomsService, reservationsService } from '../../shared/api/services'
+import type { Reservation } from '../../entities/reservation/model/types'
+import type { Room } from '../../entities/room/model/types'
 import { DAY_RANGE } from '../../shared/constants/time'
+import type { RoomSort, RoomStatusFilter } from '../../shared/types/ui'
 import { buildDayOptions, isValidRange, toIsoDateTime } from '../../shared/utils/dateTime'
-import type { Reservation, Room, RoomSort, RoomStatusFilter } from '../../shared/types'
 
 const dayOptions = buildDayOptions(DAY_RANGE)
 

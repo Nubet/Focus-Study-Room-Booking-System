@@ -5,7 +5,7 @@ import { TIME_OPTIONS } from '../../shared/constants/time'
 import { toIsoDateTime } from '../../shared/utils/dateTime'
 import { splitRoomId } from '../../shared/utils/roomId'
 import type { Room } from '../../entities/room/model/types'
-import type { BookingStep } from '../../shared/types/common'
+import type { BookingStep } from '../../shared/types/ui'
 
 type Building = { code: string; name: string }
 

@@ -5,10 +5,10 @@ import { RoomsPage } from '../pages/rooms/RoomsPage'
 import { plCampusBuildings } from '../data/pl-campus-buildings'
 import { useRoomsExplorer, sharedDayOptions } from '../features/rooms-explorer/model/useRoomsExplorer'
 import { useAsyncAction } from '../shared/hooks/useAsyncAction'
-import type { View } from '../shared/types/common'
+import type { AppView } from '../shared/types/ui'
 
 export default function App() {
-  const [view, setView] = useState<View>('BOOKING')
+  const [view, setView] = useState<AppView>('BOOKING')
   const [userId, setUserId] = useState('student-1')
   const { loading, message, setMessage, run } = useAsyncAction()
 
@@ -86,7 +86,7 @@ export default function App() {
         </div>
 
         <nav className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-          {(['BOOKING', 'ROOMS', 'MODERATOR'] as View[]).map((item) => (
+          {(['BOOKING', 'ROOMS', 'MODERATOR'] as AppView[]).map((item) => (
             <button
               key={item}
               type="button"
