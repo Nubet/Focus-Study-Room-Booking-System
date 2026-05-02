@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import { BuildingRepository } from "../../../buildings/domain/repositories/building-repository.js";
 import { ReservationStatus } from "../../../reservations/domain/entities/reservation.js";
 import { RoomRepository } from "../../../rooms/domain/repositories/room-repository.js";
 import { ReservationRepository } from "../../../reservations/domain/repositories/reservation-repository.js";
@@ -35,6 +36,7 @@ const isAllowedReservationTransition = (
 
 export const registerAdminRoutes = (
   app: FastifyInstance,
+  buildingRepository: BuildingRepository,
   roomRepository: RoomRepository,
   reservationRepository: ReservationRepository
 ): void => {
@@ -56,7 +58,8 @@ export const registerAdminRoutes = (
             items: {
               type: "object",
               properties: {
-                id: { type: "string" }
+                id: { type: "string" },
+                buildingCode: { type: "string" }
               }
             }
           },
@@ -93,13 +96,14 @@ export const registerAdminRoutes = (
           properties: {
             id: { type: "string", minLength: 1 }
           },
-          examples: [{ id: "room-z" }]
+          examples: [{ id: "A2-103" }]
         },
         response: {
           201: {
             type: "object",
             properties: {
-              id: { type: "string" }
+              id: { type: "string" },
+              buildingCode: { type: "string" }
             }
           },
           400: {
@@ -130,12 +134,18 @@ export const registerAdminRoutes = (
         return reply.status(400).send({ message: "Invalid payload" });
       }
 
+      const buildingCode = body.id.split("-")[0];
+      const building = await buildingRepository.findByCode(buildingCode);
+      if (!building) {
+        return reply.status(400).send({ message: "Invalid payload" });
+      }
+
       const existing = await roomRepository.findById(body.id);
       if (existing) {
         return reply.status(409).send({ message: "Room already exists" });
       }
 
-      const room = { id: body.id };
+      const room = { id: body.id, buildingCode };
       await roomRepository.save(room);
 
       return reply.status(201).send(room);
@@ -161,13 +171,14 @@ export const registerAdminRoutes = (
           properties: {
             id: { type: "string", minLength: 1 }
           },
-          examples: [{ id: "room-z-updated" }]
+          examples: [{ id: "A2-104" }]
         },
         response: {
           200: {
             type: "object",
             properties: {
-              id: { type: "string" }
+              id: { type: "string" },
+              buildingCode: { type: "string" }
             }
           },
           400: {
@@ -202,6 +213,17 @@ export const registerAdminRoutes = (
       const body = request.body as { id?: string };
 
       if (!isNonEmptyString(params.id) || !isNonEmptyString(body.id)) {
+        return reply.status(400).send({ message: "Invalid payload" });
+      }
+
+      const currentRoom = await roomRepository.findById(params.id);
+      if (!currentRoom) {
+        return reply.status(404).send({ message: "Room not found" });
+      }
+
+      const nextBuildingCode = body.id.split("-")[0];
+      const building = await buildingRepository.findByCode(nextBuildingCode);
+      if (!building) {
         return reply.status(400).send({ message: "Invalid payload" });
       }
 
