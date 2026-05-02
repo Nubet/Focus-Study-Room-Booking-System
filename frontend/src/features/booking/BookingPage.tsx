@@ -38,6 +38,10 @@ function getDurationHours(startTime: string, endTime: string): number {
   return endHour - startHour
 }
 
+function createReservationId(): string {
+  return `res-${Date.now()}`
+}
+
 function BookingStepNavigation({
   bookingStep,
   canOpenStep2,
@@ -298,12 +302,12 @@ export function BookingPage({
   const [bookingStep, setBookingStep] = useState<BookingStep>(1)
   const [activeBuildingCode, setActiveBuildingCode] = useState('A1')
   const [selectedRoomId, setSelectedRoomId] = useState('')
-  const [createReservation, setCreateReservation] = useState<ReservationDraft>({
-    id: `res-${Date.now()}`,
+  const [createReservation, setCreateReservation] = useState<ReservationDraft>(() => ({
+    id: createReservationId(),
     day: dayOptions[0].value,
     startTime: '09:00',
     endTime: '10:00'
-  })
+  }))
 
   const roomsForActiveBuilding = useMemo(
     () => rooms.filter((room) => room.id.startsWith(`${activeBuildingCode}-`)).sort((a, b) => a.id.localeCompare(b.id)),
@@ -362,7 +366,7 @@ export function BookingPage({
       })
 
       setMessage(`Reservation created: ${result.id}`)
-      setCreateReservation((prev) => ({ ...prev, id: `res-${Date.now()}` }))
+      setCreateReservation((prev) => ({ ...prev, id: createReservationId() }))
       setBookingStep(1)
       await loadAvailableRooms({
         day: createReservation.day,

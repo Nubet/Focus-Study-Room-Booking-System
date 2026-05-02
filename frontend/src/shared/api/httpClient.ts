@@ -58,7 +58,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     })
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('Request timeout. Please try again.')
+      throw new Error('Request timeout. Please try again.', { cause: error })
     }
 
     throw error
