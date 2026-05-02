@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { roomsService, reservationsService } from '../../shared/api/services'
 import type { Reservation } from '../../entities/reservation/model/types'
 import type { Room } from '../../entities/room/model/types'
 import { DAY_RANGE } from '../../shared/constants/time'
 import type { RoomSort, RoomStatusFilter } from '../../shared/types/ui'
 import { buildDayOptions, isValidRange, toIsoDateTime } from '../../shared/utils/dateTime'
+import { moderatorApi } from '../moderator/api/moderator.api'
+import { roomsExplorerApi } from '../rooms-explorer/api/rooms.api'
 
 const dayOptions = buildDayOptions(DAY_RANGE)
 
@@ -31,7 +32,7 @@ export function useRoomsAvailability(userId: string, run: (action: () => Promise
 
   const loadRooms = async (adminHeaders: HeadersInit) => {
     await run(async () => {
-      const result = await roomsService.getAll(adminHeaders)
+      const result = await roomsExplorerApi.getAllRooms(adminHeaders)
       setRooms(result)
       setMessage(`Loaded ${result.length} rooms.`)
     })
@@ -51,8 +52,8 @@ export function useRoomsAvailability(userId: string, run: (action: () => Promise
       }
 
       const [available, mine] = await Promise.all([
-        roomsService.getAvailable(from, to),
-        reservationsService.getMine(userId)
+        roomsExplorerApi.getAvailableRooms(from, to),
+        roomsExplorerApi.getMyReservations(userId)
       ])
 
       const mineForRange = mine
@@ -77,7 +78,7 @@ export function useRoomsAvailability(userId: string, run: (action: () => Promise
       if (filter.from) query.set('from', new Date(filter.from).toISOString())
       if (filter.to) query.set('to', new Date(filter.to).toISOString())
       const suffix = query.toString() ? `?${query.toString()}` : ''
-      const result = await reservationsService.getAllAdmin(suffix, adminHeaders)
+      const result = await moderatorApi.getReservations(suffix, adminHeaders)
       setAllReservations(result)
       setMessage(`Loaded ${result.length} reservations.`)
     })
