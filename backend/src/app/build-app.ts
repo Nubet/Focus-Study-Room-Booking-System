@@ -2,17 +2,18 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import { registerBuildingsRoutes } from "../modules/buildings/api/routes/buildings-routes.js";
+import { BuildingRepository } from "../modules/buildings/domain/repositories/building-repository.js";
 import { registerAdminRoutes } from "../modules/admin/api/routes/admin-routes.js";
 import { registerRoomsRoutes } from "../modules/rooms/api/routes/rooms-routes.js";
 import { registerReservationsRoutes } from "../modules/reservations/api/routes/reservations-routes.js";
 import { RoomRepository } from "../modules/rooms/domain/repositories/room-repository.js";
 import { ReservationRepository } from "../modules/reservations/domain/repositories/reservation-repository.js";
-import { InMemoryRoomRepository } from "../modules/rooms/infrastructure/repositories/in-memory-room-repository.js";
-import { InMemoryReservationRepository } from "../modules/reservations/infrastructure/repositories/in-memory-reservation-repository.js";
 
 export const buildApp = (
-  roomRepository: RoomRepository = new InMemoryRoomRepository(),
-  reservationRepository: ReservationRepository = new InMemoryReservationRepository()
+  buildingRepository: BuildingRepository,
+  roomRepository: RoomRepository,
+  reservationRepository: ReservationRepository
 ) => {
   const app = Fastify();
 
@@ -54,8 +55,9 @@ export const buildApp = (
     );
 
     registerReservationsRoutes(instance, reservationRepository);
+    registerBuildingsRoutes(instance, buildingRepository);
     registerRoomsRoutes(instance, roomRepository, reservationRepository);
-    registerAdminRoutes(instance, roomRepository, reservationRepository);
+    registerAdminRoutes(instance, buildingRepository, roomRepository, reservationRepository);
   });
 
   return app;
