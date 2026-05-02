@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildApp } from "@src/app/build-app.js";
+import { buildTestApp as buildApp } from "../support/build-test-app.js";
 
 describe("admin access guard", () => {
   it("returns 403 for non-admin role", async () => {

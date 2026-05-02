@@ -1,16 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BookingPage } from '../pages/booking/BookingPage'
-import { ModeratorPage } from '../pages/moderator/ModeratorPage'
-import { RoomsPage } from '../pages/rooms/RoomsPage'
-import { plCampusBuildings } from '../data/pl-campus-buildings'
-import { useRoomsExplorer, sharedDayOptions } from '../features/rooms-explorer/model/useRoomsExplorer'
-import { useAsyncAction } from '../shared/hooks/useAsyncAction'
-import type { View } from '../shared/types/common'
+import { useCallback, useMemo, useState } from 'react'
+import { EMPTY_MODERATOR_RESERVATION_FILTER } from '@/features/moderator/model/reservationFilter'
+import { sharedDayOptions, useRoomsData } from '@/features/rooms/model/useRoomsData'
+import { BookingPage } from '@/pages/booking/BookingPage'
+import { ModeratorPage } from '@/pages/moderator/ModeratorPage'
+import { RoomsPage } from '@/pages/rooms/RoomsPage'
+import { useAsyncAction } from '@/shared/hooks/useAsyncAction'
+import type { AppView } from '@/shared/types/ui'
+import { APP_UI_CLASSES, APP_VIEWS } from './config/ui'
+import { useBuildingsCatalog } from './model/useBuildingsCatalog'
+import { useInitialDataLoad } from './model/useInitialDataLoad'
+import { useModeratorPolling } from './model/useModeratorPolling'
 
 export default function App() {
-  const [view, setView] = useState<View>('BOOKING')
+  const [view, setView] = useState<AppView>('BOOKING')
   const [userId, setUserId] = useState('student-1')
   const { loading, message, setMessage, run } = useAsyncAction()
+  const { buildings, loadBuildings } = useBuildingsCatalog(run, setMessage)
 
   const adminHeaders = useMemo(() => ({ 'x-role': 'ADMIN', 'x-user-id': userId }), [userId])
 
@@ -24,48 +29,17 @@ export default function App() {
     loadRooms,
     loadAvailableRooms,
     loadModeratorReservations
-  } = useRoomsExplorer(userId, run, setMessage)
+  } = useRoomsData(userId, run, setMessage)
 
-  useEffect(() => {
-    void loadRooms(adminHeaders)
-    void loadAvailableRooms()
-  }, [adminHeaders])
-
-  useEffect(() => {
-    if (view !== 'MODERATOR') {
-      return
-    }
-
-    void loadModeratorReservations(adminHeaders, {
-      status: '',
-      roomId: '',
-      from: '',
-      to: ''
-    })
-
-    const intervalId = window.setInterval(() => {
-      void loadModeratorReservations(adminHeaders, {
-        status: '',
-        roomId: '',
-        from: '',
-        to: ''
-      })
-    }, 5000)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [view, adminHeaders, loadModeratorReservations])
+  useInitialDataLoad(adminHeaders, loadBuildings, loadRooms, loadAvailableRooms)
+  useModeratorPolling(view, adminHeaders, loadModeratorReservations)
 
   const buildingNameByCode = useMemo(
-    () => new Map(plCampusBuildings.map((building) => [building.code, building.name])),
-    []
+    () => new Map(buildings.map((building) => [building.code, building.name])),
+    [buildings]
   )
 
-  const panelClass = 'bg-bg-surface brutal-border shadow-brutal p-4 sm:p-5 md:p-6'
-  const inputClass =
-    'w-full brutal-border bg-bg-surface px-3 py-2.5 min-h-11 text-sm font-semibold text-text-primary outline-none focus:bg-brand-accent/20'
-  const labelClass = 'mb-1 block text-[11px] font-black tracking-wider uppercase'
+  const { panelClass, inputClass, labelClass } = APP_UI_CLASSES
   const repoUrl = 'https://github.com/Nubet/Focus-Study-Room-Booking-System'
 
   const loadAvailabilityForRoomsView = useCallback(
@@ -86,17 +60,17 @@ export default function App() {
         </div>
 
         <nav className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-          {(['BOOKING', 'ROOMS', 'MODERATOR'] as View[]).map((item) => (
+          {APP_VIEWS.map((item) => (
             <button
               key={item}
               type="button"
               className={`btn-brutal px-3 py-3 text-xs ${view === item ? 'bg-text-primary text-white' : 'bg-white'}`}
               onClick={() => {
-                setView(item)
-                if (item === 'BOOKING' || item === 'ROOMS') {
-                  void loadRooms(adminHeaders)
-                  void loadAvailableRooms()
-                }
+              setView(item)
+              if (item === 'BOOKING' || item === 'ROOMS') {
+                void loadRooms(adminHeaders)
+                void loadAvailableRooms()
+              }
               }}
             >
               {item}
@@ -119,7 +93,7 @@ export default function App() {
             run={run}
             setMessage={setMessage}
             loadAvailableRooms={loadAvailableRooms}
-            buildings={plCampusBuildings}
+            buildings={buildings}
             panelClass={panelClass}
             inputClass={inputClass}
             labelClass={labelClass}
@@ -135,7 +109,7 @@ export default function App() {
             roomsFilter={roomsFilter}
             setRoomsFilter={setRoomsFilter}
             buildingNameByCode={buildingNameByCode}
-            buildingOptions={plCampusBuildings}
+            buildingOptions={buildings}
             availableSet={availableSet}
             myBookedSet={myBookedSet}
             loadRooms={() => void loadRooms(adminHeaders)}
@@ -155,12 +129,7 @@ export default function App() {
             setMessage={setMessage}
             reloadRooms={() => loadRooms(adminHeaders)}
             reloadReservations={() =>
-              loadModeratorReservations(adminHeaders, {
-                status: '',
-                roomId: '',
-                from: '',
-                to: ''
-              })
+              loadModeratorReservations(adminHeaders, EMPTY_MODERATOR_RESERVATION_FILTER)
             }
           />
         ) : null}

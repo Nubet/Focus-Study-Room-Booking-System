@@ -12,7 +12,15 @@ datasource db {
 
 model Room {
   id           String        @id
+  buildingCode String
+  building     Building      @relation(fields: [buildingCode], references: [code], onDelete: Restrict)
   reservations Reservation[]
+}
+
+model Building {
+  code  String @id
+  name  String
+  rooms Room[]
 }
 
 model Reservation {

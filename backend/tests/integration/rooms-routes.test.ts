@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildApp } from "@src/app/build-app.js";
+import { buildTestApp as buildApp } from "../support/build-test-app.js";
 
 describe("rooms routes", () => {
   it("returns available rooms for selected time range", async () => {

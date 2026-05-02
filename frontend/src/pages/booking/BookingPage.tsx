@@ -1,1 +1,1 @@
-export { BookingWizard as BookingPage } from '../../features/booking/ui/BookingWizard'
+export { BookingPage } from '@/features/booking/BookingPage'

@@ -1,18 +1,22 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { Reservation } from '../../../entities/reservation/model/types'
 import type { Room } from '../../../entities/room/model/types'
+import { getBookedRoomIdsForRange } from '../../../entities/reservation/model/utils'
 import { DAY_RANGE } from '../../../shared/constants/time'
-import type { RoomSort, RoomStatusFilter } from '../../../shared/types/common'
+import type { AsyncActionRunner } from '../../../shared/hooks/useAsyncAction'
 import { buildDayOptions, isValidRange, toIsoDateTime } from '../../../shared/utils/dateTime'
 import { moderatorApi } from '../../moderator/api/moderator.api'
-import { roomsExplorerApi } from '../api/rooms.api'
+import { buildReservationsQuerySuffix } from '../../moderator/model/query'
+import type { ModeratorReservationFilter } from '../../moderator/model/reservationFilter'
+import { roomsApi } from '../api/rooms.api'
+import type { RoomAvailabilityInput, RoomsFilterState } from './types'
 
 const dayOptions = buildDayOptions(DAY_RANGE)
 export const sharedDayOptions = dayOptions
 
-export function useRoomsExplorer(
+export function useRoomsData(
   userId: string,
-  run: (action: () => Promise<void>) => Promise<void>,
+  run: AsyncActionRunner,
   setMessage: (msg: string) => void
 ) {
   const [rooms, setRooms] = useState<Room[]>([])
@@ -20,11 +24,11 @@ export function useRoomsExplorer(
   const [myBookedRoomIds, setMyBookedRoomIds] = useState<string[]>([])
   const [allReservations, setAllReservations] = useState<Reservation[]>([])
 
-  const [roomsFilter, setRoomsFilter] = useState({
+  const [roomsFilter, setRoomsFilter] = useState<RoomsFilterState>({
     query: '',
     buildingCode: 'ALL',
-    status: 'ALL' as RoomStatusFilter,
-    sort: 'ROOM_ASC' as RoomSort,
+    status: 'ALL',
+    sort: 'ROOM_ASC',
     day: dayOptions[0].value,
     fromTime: '09:00',
     toTime: '10:00'
@@ -35,13 +39,13 @@ export function useRoomsExplorer(
 
   const loadRooms = useCallback(async (adminHeaders: HeadersInit) => {
     await run(async () => {
-      const result = await roomsExplorerApi.getAllRooms(adminHeaders)
+      const result = await roomsApi.getAllRooms(adminHeaders)
       setRooms(result)
       setMessage(`Loaded ${result.length} rooms.`)
     })
   }, [run, setMessage])
 
-  const loadAvailableRooms = useCallback(async (input?: { day?: string; fromTime?: string; toTime?: string }) => {
+  const loadAvailableRooms = useCallback(async (input?: RoomAvailabilityInput) => {
     await run(async () => {
       const day = input?.day ?? roomsFilter.day
       const fromTime = input?.fromTime ?? roomsFilter.fromTime
@@ -55,17 +59,11 @@ export function useRoomsExplorer(
       }
 
       const [available, mine] = await Promise.all([
-        roomsExplorerApi.getAvailableRooms(from, to),
-        roomsExplorerApi.getMyReservations(userId)
+        roomsApi.getAvailableRooms(from, to),
+        roomsApi.getMyReservations(userId)
       ])
 
-      const mineForRange = mine
-        .filter((reservation) => {
-          const blocking = reservation.status === 'RESERVED' || reservation.status === 'OCCUPIED'
-          if (!blocking) return false
-          return new Date(reservation.startTime) < new Date(to) && new Date(reservation.endTime) > new Date(from)
-        })
-        .map((reservation) => reservation.roomId)
+      const mineForRange = getBookedRoomIdsForRange(mine, from, to)
 
       setAvailableRooms(available)
       setMyBookedRoomIds(Array.from(new Set(mineForRange)))
@@ -75,15 +73,10 @@ export function useRoomsExplorer(
 
   const loadModeratorReservations = useCallback(async (
     adminHeaders: HeadersInit,
-    filter: { status: string; roomId: string; from: string; to: string }
+    filter: ModeratorReservationFilter
   ) => {
     await run(async () => {
-      const query = new URLSearchParams()
-      if (filter.status) query.set('status', filter.status)
-      if (filter.roomId) query.set('roomId', filter.roomId)
-      if (filter.from) query.set('from', new Date(filter.from).toISOString())
-      if (filter.to) query.set('to', new Date(filter.to).toISOString())
-      const suffix = query.toString() ? `?${query.toString()}` : ''
+      const suffix = buildReservationsQuerySuffix(filter)
       const result = await moderatorApi.getReservations(suffix, adminHeaders)
       setAllReservations(result)
       setMessage(`Loaded ${result.length} reservations.`)

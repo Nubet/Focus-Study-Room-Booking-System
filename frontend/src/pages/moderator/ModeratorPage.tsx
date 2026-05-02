@@ -1,1 +1,1 @@
-export { ModeratorPanel as ModeratorPage } from '../../features/moderator/ui/ModeratorPanel'
+export { ModeratorPage } from '@/features/moderator/ModeratorPage'

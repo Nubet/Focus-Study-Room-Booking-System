@@ -1,26 +1,289 @@
 import type { FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
+import type { Room } from '@/entities/room/model/types'
+import type { AsyncActionRunner } from '@/shared/hooks/useAsyncAction'
+import { TIME_OPTIONS } from '@/shared/constants/time'
+import type { BookingStep } from '@/shared/types/ui'
+import { toIsoDateTime } from '@/shared/utils/dateTime'
+import { splitRoomId } from '@/shared/utils/roomId'
 import { bookingApi } from './api/booking.api'
-import { TIME_OPTIONS } from '../../shared/constants/time'
-import { toIsoDateTime } from '../../shared/utils/dateTime'
-import { splitRoomId } from '../../shared/utils/roomId'
-import type { Room } from '../../entities/room/model/types'
-import type { BookingStep } from '../../shared/types/common'
 
 type Building = { code: string; name: string }
+
+type ReservationDraft = {
+  id: string
+  day: string
+  startTime: string
+  endTime: string
+}
 
 type Props = {
   userId: string
   setUserId: (value: string) => void
   rooms: Room[]
   dayOptions: Array<{ value: string; label: string }>
-  run: (action: () => Promise<void>) => Promise<void>
+  run: AsyncActionRunner
   setMessage: (value: string) => void
   loadAvailableRooms: (input?: { day?: string; fromTime?: string; toTime?: string }) => Promise<void>
   buildings: Building[]
   panelClass: string
   inputClass: string
   labelClass: string
+}
+
+function getDurationHours(startTime: string, endTime: string): number {
+  const startHour = Number(startTime.split(':')[0])
+  const endHour = Number(endTime.split(':')[0])
+  return endHour - startHour
+}
+
+function createReservationId(): string {
+  return `res-${Date.now()}`
+}
+
+function BookingStepNavigation({
+  bookingStep,
+  canOpenStep2,
+  canOpenStep3,
+  onSelectStep,
+  onOpenStep2,
+  onOpenStep3
+}: {
+  bookingStep: BookingStep
+  canOpenStep2: boolean
+  canOpenStep3: boolean
+  onSelectStep: (step: BookingStep) => void
+  onOpenStep2: () => void
+  onOpenStep3: () => void
+}) {
+  const stepStyles = (step: BookingStep) => {
+    if (bookingStep === step) return 'bg-text-primary text-white'
+    if (bookingStep > step) return 'bg-success text-white'
+    return 'bg-white text-text-primary'
+  }
+
+  return (
+    <div className="mb-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <button type="button" className={`brutal-border py-3 text-xs font-black uppercase sm:py-2 ${stepStyles(1)}`} onClick={() => onSelectStep(1)}>Step 1 room</button>
+      <button
+        type="button"
+        className={`brutal-border py-3 text-xs font-black uppercase sm:py-2 ${stepStyles(2)} ${canOpenStep2 ? '' : 'cursor-not-allowed opacity-60'}`}
+        onClick={onOpenStep2}
+        disabled={!canOpenStep2}
+      >
+        {canOpenStep2 ? 'Step 2 time' : 'Step 2 locked'}
+      </button>
+      <button
+        type="button"
+        className={`brutal-border py-3 text-xs font-black uppercase sm:py-2 ${stepStyles(3)} ${canOpenStep3 ? '' : 'cursor-not-allowed opacity-60'}`}
+        onClick={onOpenStep3}
+        disabled={!canOpenStep3}
+      >
+        {canOpenStep3 ? 'Step 3 confirm' : 'Step 3 locked'}
+      </button>
+    </div>
+  )
+}
+
+function RoomSelectionStep({
+  buildings,
+  roomsForActiveBuilding,
+  selectedRoomId,
+  activeBuildingCode,
+  setActiveBuildingCode,
+  onSelectRoom
+}: {
+  buildings: Building[]
+  roomsForActiveBuilding: Room[]
+  selectedRoomId: string
+  activeBuildingCode: string
+  setActiveBuildingCode: (value: string) => void
+  onSelectRoom: (roomId: string) => void
+}) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="max-h-[40vh] space-y-2 overflow-y-auto pr-1 lg:max-h-130">
+        {buildings.map((building) => (
+          <button key={building.code} type="button" className={`w-full brutal-border p-3 text-left ${activeBuildingCode === building.code ? 'bg-brand-accent' : 'bg-white'}`} onClick={() => setActiveBuildingCode(building.code)}>
+            <p className="text-sm font-black">{building.code}</p>
+            <p className="text-xs font-semibold text-text-muted">{building.name}</p>
+          </button>
+        ))}
+      </div>
+      <div>
+        <p className="mb-2 text-sm font-black uppercase tracking-wider">Select room from {activeBuildingCode}</p>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {roomsForActiveBuilding.length === 0 ? (
+            <p className="text-sm font-semibold text-text-muted">No rooms available in this building.</p>
+          ) : (
+            roomsForActiveBuilding.map((room) => {
+              const { buildingCode, roomNumber } = splitRoomId(room.id)
+              const isSelected = selectedRoomId === room.id
+              return (
+                <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isSelected ? 'bg-brand-primary text-white' : 'bg-white'}`} onClick={() => onSelectRoom(room.id)}>
+                  <div className="mb-2 h-10 w-10 brutal-border bg-bg-canvas" />
+                  <p className="text-lg font-black">
+                    <span className={isSelected ? 'text-white' : 'text-brand-primary'}>{buildingCode}</span>
+                    <span>-</span>
+                    <span className={isSelected ? 'text-white' : 'text-danger'}>{roomNumber}</span>
+                  </p>
+                  <p className="text-xs font-semibold">Live room</p>
+                </button>
+              )
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TimeSelectionStep({
+  selectedRoomId,
+  createReservation,
+  dayOptions,
+  startTimeOptions,
+  endTimeOptions,
+  inputClass,
+  labelClass,
+  setCreateReservation,
+  onBack,
+  onContinue
+}: {
+  selectedRoomId: string
+  createReservation: ReservationDraft
+  dayOptions: Array<{ value: string; label: string }>
+  startTimeOptions: string[]
+  endTimeOptions: string[]
+  inputClass: string
+  labelClass: string
+  setCreateReservation: Dispatch<SetStateAction<ReservationDraft>>
+  onBack: () => void
+  onContinue: () => void
+}) {
+  return (
+    <div className="mx-auto max-w-2xl brutal-border bg-bg-canvas p-4 sm:p-5">
+      <p className="mb-3 text-sm font-black uppercase tracking-wider">Selected room</p>
+      <label className={labelClass}>Selected room (locked)</label>
+      <input className={`${inputClass} mb-4 cursor-not-allowed bg-neutral/20`} value={selectedRoomId} readOnly disabled placeholder="Select room in step 1" />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label className={labelClass}>Day</label>
+          <select className={inputClass} value={createReservation.day} onChange={(event) => setCreateReservation((prev) => ({ ...prev, day: event.target.value }))}>
+            {dayOptions.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Start hour</label>
+          <select
+            className={inputClass}
+            value={createReservation.startTime}
+            onChange={(event) => {
+              const nextStart = event.target.value
+              setCreateReservation((prev) => {
+                const nextEnd = nextStart >= prev.endTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextStart) + 1] : prev.endTime
+                return { ...prev, startTime: nextStart, endTime: nextEnd }
+              })
+            }}
+          >
+            {startTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>End hour</label>
+          <select
+            className={inputClass}
+            value={createReservation.endTime}
+            onChange={(event) => {
+              const nextEnd = event.target.value
+              setCreateReservation((prev) => {
+                const nextStart = nextEnd <= prev.startTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextEnd) - 1] : prev.startTime
+                return { ...prev, startTime: nextStart, endTime: nextEnd }
+              })
+            }}
+          >
+            {endTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button className="btn-brutal min-h-11 bg-white py-3" type="button" onClick={onBack}>Back</button>
+        <button className="btn-brutal min-h-11 bg-text-primary py-3 text-white" type="button" onClick={onContinue}>Continue</button>
+      </div>
+    </div>
+  )
+}
+
+function ConfirmationStep({
+  selectedRoomId,
+  userId,
+  buildings,
+  createReservation,
+  onBack,
+  onConfirm
+}: {
+  selectedRoomId: string
+  userId: string
+  buildings: Building[]
+  createReservation: ReservationDraft
+  onBack: () => void
+  onConfirm: (event: FormEvent) => void
+}) {
+  const durationHours = getDurationHours(createReservation.startTime, createReservation.endTime)
+  const selectedBuildingName = selectedRoomId
+    ? buildings.find((building) => building.code === splitRoomId(selectedRoomId).buildingCode)?.name ?? 'Unknown building'
+    : '-'
+
+  return (
+    <div className="mx-auto max-w-lg brutal-border bg-white shadow-brutal">
+      <div className="border-b-[3px] border-dashed border-text-primary bg-brand-accent p-4 text-center sm:p-6">
+        <h3 className="text-xl font-black uppercase tracking-widest text-text-primary sm:text-2xl">Booking Ticket</h3>
+        <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-text-muted sm:text-xs">Final Confirmation</p>
+      </div>
+      <div className="space-y-4 bg-bg-canvas p-4 sm:space-y-5 sm:p-6">
+        <div className="flex flex-wrap justify-between gap-4 border-b-[3px] border-text-primary pb-4 sm:flex-nowrap">
+          <div className="w-full sm:w-auto">
+            <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Room</p>
+            <p className="mt-1 text-xl font-black leading-none text-brand-primary sm:text-2xl">{selectedRoomId || '-'}</p>
+            <p className="mt-1 text-xs font-bold leading-tight text-text-primary sm:max-w-50">{selectedBuildingName}</p>
+          </div>
+          <div className="w-full sm:w-auto sm:text-right">
+            <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">User</p>
+            <p className="mt-1 text-lg font-black leading-none">{userId}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap justify-between gap-4 border-b-[3px] border-text-primary pb-4 sm:flex-nowrap">
+          <div className="w-full sm:w-auto">
+            <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Date</p>
+            <p className="mt-1 text-lg font-black leading-none">{createReservation.day}</p>
+          </div>
+          <div className="w-full sm:w-auto sm:text-right">
+            <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Time Window</p>
+            <p className="mt-1 text-lg font-black leading-none">{createReservation.startTime} - {createReservation.endTime}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-sm font-black uppercase tracking-wider">Total Duration</p>
+          <div className="brutal-border bg-brand-primary px-3 py-1 text-lg font-black text-white">
+            {durationHours} {durationHours === 1 ? 'HR' : 'HRS'}
+          </div>
+        </div>
+      </div>
+      <div className="border-t-[3px] border-dashed border-text-primary bg-white p-4 sm:p-6">
+        <form onSubmit={onConfirm}>
+          <div className="mb-5 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Internal ID (Auto-generated)</p>
+            <p className="mt-1 break-all font-mono text-xs font-semibold text-text-primary">{createReservation.id}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button className="btn-brutal min-h-11 bg-bg-canvas py-3 text-xs font-black uppercase tracking-wider sm:text-sm" type="button" onClick={onBack}>Back</button>
+            <button className="btn-brutal min-h-11 bg-success py-3 text-xs font-black uppercase tracking-wider text-white hover:brightness-110 sm:text-sm" type="submit">Confirm</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }
 
 export function BookingPage({
@@ -37,18 +300,26 @@ export function BookingPage({
   labelClass
 }: Props) {
   const [bookingStep, setBookingStep] = useState<BookingStep>(1)
-  const [activeBuildingCode, setActiveBuildingCode] = useState('A1')
+  const [activeBuildingCode, setActiveBuildingCode] = useState('')
   const [selectedRoomId, setSelectedRoomId] = useState('')
-  const [createReservation, setCreateReservation] = useState({
-    id: `res-${Date.now()}`,
+  const [createReservation, setCreateReservation] = useState<ReservationDraft>(() => ({
+    id: createReservationId(),
     day: dayOptions[0].value,
     startTime: '09:00',
     endTime: '10:00'
-  })
+  }))
+
+  const resolvedActiveBuildingCode = useMemo(() => {
+    const hasActiveBuilding = buildings.some((building) => building.code === activeBuildingCode)
+    if (hasActiveBuilding) {
+      return activeBuildingCode
+    }
+    return buildings[0]?.code ?? ''
+  }, [activeBuildingCode, buildings])
 
   const roomsForActiveBuilding = useMemo(
-    () => rooms.filter((room) => room.id.startsWith(`${activeBuildingCode}-`)).sort((a, b) => a.id.localeCompare(b.id)),
-    [rooms, activeBuildingCode]
+    () => rooms.filter((room) => room.id.startsWith(`${resolvedActiveBuildingCode}-`)).sort((a, b) => a.id.localeCompare(b.id)),
+    [rooms, resolvedActiveBuildingCode]
   )
 
   const startTimeOptions = useMemo(() => {
@@ -62,9 +333,6 @@ export function BookingPage({
     if (startIndex === -1 || startIndex >= TIME_OPTIONS.length - 1) return TIME_OPTIONS.slice(1)
     return TIME_OPTIONS.slice(startIndex + 1)
   }, [createReservation.startTime])
-
-  const stepStyles = (step: BookingStep) =>
-    bookingStep === step ? 'bg-text-primary text-white' : bookingStep > step ? 'bg-success text-white' : 'bg-white text-text-primary'
 
   const canOpenStep2 = Boolean(selectedRoomId)
   const canOpenStep3 = Boolean(selectedRoomId)
@@ -88,7 +356,7 @@ export function BookingPage({
       return
     }
 
-    run(async () => {
+    void run(async () => {
       const startTime = toIsoDateTime(createReservation.day, createReservation.startTime)
       const endTime = toIsoDateTime(createReservation.day, createReservation.endTime)
 
@@ -106,7 +374,7 @@ export function BookingPage({
       })
 
       setMessage(`Reservation created: ${result.id}`)
-      setCreateReservation((prev) => ({ ...prev, id: `res-${Date.now()}` }))
+      setCreateReservation((prev) => ({ ...prev, id: createReservationId() }))
       setBookingStep(1)
       await loadAvailableRooms({
         day: createReservation.day,
@@ -134,176 +402,62 @@ export function BookingPage({
 
   return (
     <section className={panelClass}>
-      <div className="mb-4 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2">
+      <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <h2 className="mr-auto text-2xl font-black uppercase tracking-tight">Booking Wizard</h2>
-        <div className="flex w-full sm:w-auto items-center gap-2 bg-bg-canvas px-3 py-1 brutal-border">
-          <label htmlFor="simulate-login" className="text-xs font-bold uppercase tracking-wider text-text-muted whitespace-nowrap">Simulate login as:</label>
-          <input id="simulate-login" className="w-full sm:w-35 brutal-border bg-white px-2 py-1 text-xs font-semibold min-h-11 sm:min-h-0" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
+        <div className="flex w-full items-center gap-2 brutal-border bg-bg-canvas px-3 py-1 sm:w-auto">
+          <label htmlFor="simulate-login" className="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-text-muted">Simulate login as:</label>
+          <input id="simulate-login" className="min-h-11 w-full brutal-border bg-white px-2 py-1 text-xs font-semibold sm:min-h-0 sm:w-35" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
         </div>
-        <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs w-full sm:w-auto min-h-11 sm:min-h-0" type="button" onClick={() => loadAvailableRooms({ day: createReservation.day, fromTime: createReservation.startTime, toTime: createReservation.endTime })}>Load available rooms</button>
+        <button className="btn-brutal min-h-11 w-full bg-bg-canvas px-3 py-2 text-xs sm:min-h-0 sm:w-auto" type="button" onClick={() => void loadAvailableRooms({ day: createReservation.day, fromTime: createReservation.startTime, toTime: createReservation.endTime })}>Load available rooms</button>
       </div>
 
-      <div className="mb-5 grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <button type="button" className={`brutal-border py-3 sm:py-2 text-xs font-black uppercase ${stepStyles(1)}`} onClick={() => setBookingStep(1)}>Step 1 room</button>
-        <button
-          type="button"
-          className={`brutal-border py-3 sm:py-2 text-xs font-black uppercase ${stepStyles(2)} ${canOpenStep2 ? '' : 'opacity-60 cursor-not-allowed'}`}
-          onClick={goToStep2}
-          disabled={!canOpenStep2}
-        >
-          {canOpenStep2 ? 'Step 2 time' : 'Step 2 locked'}
-        </button>
-        <button
-          type="button"
-          className={`brutal-border py-3 sm:py-2 text-xs font-black uppercase ${stepStyles(3)} ${canOpenStep3 ? '' : 'opacity-60 cursor-not-allowed'}`}
-          onClick={goToStep3}
-          disabled={!canOpenStep3}
-        >
-          {canOpenStep3 ? 'Step 3 confirm' : 'Step 3 locked'}
-        </button>
-      </div>
+      <BookingStepNavigation
+        bookingStep={bookingStep}
+        canOpenStep2={canOpenStep2}
+        canOpenStep3={canOpenStep3}
+        onSelectStep={setBookingStep}
+        onOpenStep2={goToStep2}
+        onOpenStep3={goToStep3}
+      />
 
       {bookingStep === 1 ? (
-        <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="max-h-[40vh] lg:max-h-130 space-y-2 overflow-y-auto pr-1">
-            {buildings.map((building) => (
-              <button key={building.code} type="button" className={`w-full brutal-border p-3 text-left ${activeBuildingCode === building.code ? 'bg-brand-accent' : 'bg-white'}`} onClick={() => setActiveBuildingCode(building.code)}>
-                <p className="text-sm font-black">{building.code}</p>
-                <p className="text-xs font-semibold text-text-muted">{building.name}</p>
-              </button>
-            ))}
-          </div>
-          <div>
-            <p className="mb-2 text-sm font-black uppercase tracking-wider">Select room from {activeBuildingCode}</p>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {roomsForActiveBuilding.length === 0 ? (
-                <p className="text-sm font-semibold text-text-muted">No rooms available in this building.</p>
-              ) : (
-                roomsForActiveBuilding.map((room) => (
-                  <button key={room.id} type="button" className={`brutal-border p-4 text-left ${selectedRoomId === room.id ? 'bg-brand-primary text-white' : 'bg-white'}`} onClick={() => { setSelectedRoomId(room.id); setBookingStep(2) }}>
-                    <div className="mb-2 h-10 w-10 sm:h-10 sm:w-10 brutal-border bg-bg-canvas" />
-                    <p className="text-lg font-black">
-                      <span className={selectedRoomId === room.id ? 'text-white' : 'text-brand-primary'}>{splitRoomId(room.id).buildingCode}</span>
-                      <span>-</span>
-                      <span className={selectedRoomId === room.id ? 'text-white' : 'text-danger'}>{splitRoomId(room.id).roomNumber}</span>
-                    </p>
-                    <p className="text-xs font-semibold">Live room</p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+        <RoomSelectionStep
+          buildings={buildings}
+          roomsForActiveBuilding={roomsForActiveBuilding}
+          selectedRoomId={selectedRoomId}
+          activeBuildingCode={resolvedActiveBuildingCode}
+          setActiveBuildingCode={setActiveBuildingCode}
+          onSelectRoom={(roomId) => {
+            setSelectedRoomId(roomId)
+            setBookingStep(2)
+          }}
+        />
       ) : null}
 
       {bookingStep === 2 ? (
-        <div className="mx-auto max-w-2xl brutal-border bg-bg-canvas p-4 sm:p-5">
-          <p className="mb-3 text-sm font-black uppercase tracking-wider">Selected room</p>
-          <label className={labelClass}>Selected room (locked)</label>
-          <input
-            className={`${inputClass} mb-4 cursor-not-allowed bg-neutral/20`}
-            value={selectedRoomId}
-            readOnly
-            disabled
-            placeholder="Select room in step 1"
-          />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className={labelClass}>Day</label>
-              <select className={inputClass} value={createReservation.day} onChange={(event) => setCreateReservation((prev) => ({ ...prev, day: event.target.value }))}>
-                {dayOptions.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Start hour</label>
-              <select
-                className={inputClass}
-                value={createReservation.startTime}
-                onChange={(event) => {
-                  const nextStart = event.target.value
-                  setCreateReservation((prev) => {
-                    const nextEnd = nextStart >= prev.endTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextStart) + 1] : prev.endTime
-                    return { ...prev, startTime: nextStart, endTime: nextEnd }
-                  })
-                }}
-              >
-                {startTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>End hour</label>
-              <select
-                className={inputClass}
-                value={createReservation.endTime}
-                onChange={(event) => {
-                  const nextEnd = event.target.value
-                  setCreateReservation((prev) => {
-                    const nextStart = nextEnd <= prev.startTime ? TIME_OPTIONS[TIME_OPTIONS.indexOf(nextEnd) - 1] : prev.startTime
-                    return { ...prev, startTime: nextStart, endTime: nextEnd }
-                  })
-                }}
-              >
-                {endTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <button className="btn-brutal bg-white py-3 min-h-11" type="button" onClick={() => setBookingStep(1)}>Back</button>
-            <button className="btn-brutal bg-text-primary py-3 text-white min-h-11" type="button" onClick={goToStep3}>Continue</button>
-          </div>
-        </div>
+        <TimeSelectionStep
+          selectedRoomId={selectedRoomId}
+          createReservation={createReservation}
+          dayOptions={dayOptions}
+          startTimeOptions={startTimeOptions}
+          endTimeOptions={endTimeOptions}
+          inputClass={inputClass}
+          labelClass={labelClass}
+          setCreateReservation={setCreateReservation}
+          onBack={() => setBookingStep(1)}
+          onContinue={goToStep3}
+        />
       ) : null}
 
       {bookingStep === 3 ? (
-        <div className="mx-auto max-w-lg brutal-border bg-white shadow-brutal">
-          <div className="border-b-[3px] border-dashed border-text-primary bg-brand-accent p-4 sm:p-6 text-center">
-            <h3 className="text-xl sm:text-2xl font-black uppercase tracking-widest text-text-primary">Booking Ticket</h3>
-            <p className="mt-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-muted">Final Confirmation</p>
-          </div>
-          <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 bg-bg-canvas">
-            <div className="flex flex-wrap sm:flex-nowrap justify-between gap-4 border-b-[3px] border-text-primary pb-4">
-              <div className="w-full sm:w-auto">
-                <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Room</p>
-                <p className="text-xl sm:text-2xl font-black text-brand-primary leading-none mt-1">{selectedRoomId || '-'}</p>
-                <p className="text-xs font-bold text-text-primary mt-1 sm:max-w-50 leading-tight">
-                  {selectedRoomId && (buildings.find((b) => b.code === splitRoomId(selectedRoomId).buildingCode)?.name || 'Unknown building')}
-                </p>
-              </div>
-              <div className="w-full sm:w-auto sm:text-right">
-                <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">User</p>
-                <p className="text-lg font-black leading-none mt-1">{userId}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap sm:flex-nowrap justify-between gap-4 border-b-[3px] border-text-primary pb-4">
-              <div className="w-full sm:w-auto">
-                <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Date</p>
-                <p className="text-lg font-black leading-none mt-1">{createReservation.day}</p>
-              </div>
-              <div className="w-full sm:w-auto sm:text-right">
-                <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Time Window</p>
-                <p className="text-lg font-black leading-none mt-1">{createReservation.startTime} - {createReservation.endTime}</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-sm font-black uppercase tracking-wider">Total Duration</p>
-              <div className="brutal-border bg-brand-primary px-3 py-1 text-lg font-black text-white">
-                {parseInt(createReservation.endTime, 10) - parseInt(createReservation.startTime, 10)} {parseInt(createReservation.endTime, 10) - parseInt(createReservation.startTime, 10) === 1 ? 'HR' : 'HRS'}
-              </div>
-            </div>
-          </div>
-          <div className="border-t-[3px] border-dashed border-text-primary p-4 sm:p-6 bg-white">
-            <form onSubmit={createNewReservation}>
-              <div className="mb-5 text-center">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Internal ID (Auto-generated)</p>
-                <p className="font-mono text-xs font-semibold text-text-primary mt-1 break-all">{createReservation.id}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <button className="btn-brutal bg-bg-canvas py-3 min-h-11 font-black uppercase tracking-wider text-xs sm:text-sm" type="button" onClick={() => setBookingStep(2)}>Back</button>
-                <button className="btn-brutal bg-success py-3 min-h-11 text-white font-black uppercase tracking-wider hover:brightness-110 text-xs sm:text-sm" type="submit">Confirm</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ConfirmationStep
+          selectedRoomId={selectedRoomId}
+          userId={userId}
+          buildings={buildings}
+          createReservation={createReservation}
+          onBack={() => setBookingStep(2)}
+          onConfirm={createNewReservation}
+        />
       ) : null}
     </section>
   )

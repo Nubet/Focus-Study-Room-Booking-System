@@ -1,7 +1,8 @@
 #!/bin/sh
+set -e
 
 echo "Pushing database schema..."
-npx prisma db push --accept-data-loss
+npx prisma db push --force-reset --accept-data-loss
 
 echo "Seeding database..."
 npm run seed

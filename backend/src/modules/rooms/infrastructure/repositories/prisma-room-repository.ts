@@ -17,15 +17,16 @@ export class PrismaRoomRepository implements RoomRepository  {
 
   async save(room: Room): Promise<void> {
     await this.prisma.room.create({
-      data: { id: room.id },
+      data: { id: room.id, buildingCode: room.buildingCode },
     });
   }
 
   async updateId(currentId: string, nextId: string): Promise<Room | null> {
     try {
+      const nextBuildingCode = nextId.split('-')[0]
       const room = await this.prisma.room.update({
         where: { id: currentId },
-        data: { id: nextId },
+        data: { id: nextId, buildingCode: nextBuildingCode },
       });
       return room;
     } catch {
