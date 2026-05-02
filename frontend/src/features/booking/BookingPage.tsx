@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { bookingApi } from './api/booking.api'
+import type { AsyncActionRunner } from '../../shared/hooks/useAsyncAction'
 import { TIME_OPTIONS } from '../../shared/constants/time'
 import { toIsoDateTime } from '../../shared/utils/dateTime'
 import { splitRoomId } from '../../shared/utils/roomId'
@@ -14,7 +15,7 @@ type Props = {
   setUserId: (value: string) => void
   rooms: Room[]
   dayOptions: Array<{ value: string; label: string }>
-  run: (action: () => Promise<void>) => Promise<void>
+  run: AsyncActionRunner
   setMessage: (value: string) => void
   loadAvailableRooms: (input?: { day?: string; fromTime?: string; toTime?: string }) => Promise<void>
   buildings: Building[]

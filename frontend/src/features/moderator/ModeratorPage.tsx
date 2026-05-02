@@ -5,6 +5,7 @@ import type { Reservation } from '../../entities/reservation/model/types'
 import { isReservationStatus } from '../../entities/reservation/model/status'
 import type { ReservationStatus } from '../../entities/reservation/model/status'
 import type { Room } from '../../entities/room/model/types'
+import type { AsyncActionRunner } from '../../shared/hooks/useAsyncAction'
 import { splitRoomId } from '../../shared/utils/roomId'
 
 const statusColorMap: Record<ReservationStatus, string> = {
@@ -21,7 +22,7 @@ type Props = {
   adminHeaders: HeadersInit
   rooms: Room[]
   reservations: Reservation[]
-  run: (action: () => Promise<void>) => Promise<void>
+  run: AsyncActionRunner
   setMessage: (value: string) => void
   reloadRooms: () => Promise<void>
   reloadReservations: () => Promise<void>

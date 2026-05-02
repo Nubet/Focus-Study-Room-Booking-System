@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { Reservation } from '../../../entities/reservation/model/types'
 import type { Room } from '../../../entities/room/model/types'
+import { getBookedRoomIdsForRange } from '../../../entities/reservation/model/utils'
+import type { AsyncActionRunner } from '../../../shared/hooks/useAsyncAction'
 import { DAY_RANGE } from '../../../shared/constants/time'
 import type { RoomSort, RoomStatusFilter } from '../../../shared/types/ui'
 import { buildDayOptions, isValidRange, toIsoDateTime } from '../../../shared/utils/dateTime'
@@ -12,7 +14,7 @@ export const sharedDayOptions = dayOptions
 
 export function useRoomsExplorer(
   userId: string,
-  run: (action: () => Promise<void>) => Promise<void>,
+  run: AsyncActionRunner,
   setMessage: (msg: string) => void
 ) {
   const [rooms, setRooms] = useState<Room[]>([])
@@ -59,13 +61,7 @@ export function useRoomsExplorer(
         roomsExplorerApi.getMyReservations(userId)
       ])
 
-      const mineForRange = mine
-        .filter((reservation) => {
-          const blocking = reservation.status === 'RESERVED' || reservation.status === 'OCCUPIED'
-          if (!blocking) return false
-          return new Date(reservation.startTime) < new Date(to) && new Date(reservation.endTime) > new Date(from)
-        })
-        .map((reservation) => reservation.roomId)
+      const mineForRange = getBookedRoomIdsForRange(mine, from, to)
 
       setAvailableRooms(available)
       setMyBookedRoomIds(Array.from(new Set(mineForRange)))
