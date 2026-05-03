@@ -4,7 +4,7 @@ import type { Room } from '@/entities/room/model/types'
 import { TIME_OPTIONS } from '@/shared/constants/time'
 import type { RoomSort, RoomStatusFilter } from '@/shared/types/ui'
 import { splitRoomId } from '@/shared/utils/roomId'
-import type { RoomsFilterState } from './model/types'
+import type { RoomsFilterState } from '@/features/rooms/model/types'
 
 type BuildingMap = Map<string, string>
 
@@ -244,9 +244,9 @@ export function RoomsPage({
   return (
     <section className={panelClass}>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <h2 className="mr-auto text-2xl font-black uppercase tracking-tight">All Rooms</h2>
-        <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={loadRooms}>Load rooms</button>
-        <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={loadAvailableRooms}>Refresh availability</button>
+        <h2 className="mr-auto text-2xl font-bold uppercase tracking-tight">All Rooms</h2>
+        <button className="btn-primary bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={loadRooms}>Load rooms</button>
+        <button className="btn-primary bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={loadAvailableRooms}>Refresh availability</button>
       </div>
 
       <RoomsFilters
@@ -260,7 +260,7 @@ export function RoomsPage({
         toTimeOptions={toTimeOptions}
       />
 
-      <div className="mb-3 text-xs font-black uppercase tracking-wider text-text-muted">
+      <div className="mb-3 text-sm font-semibold tracking-wide text-text-muted">
         {selectedRoom ? `Selected room: ${selectedRoom.id}` : 'Select a room to open details'}
       </div>
 
@@ -275,34 +275,34 @@ export function RoomsPage({
             const isSelected = selectedRoomId === room.id
 
             return (
-              <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isSelected ? 'bg-brand-primary text-white shadow-brutal-sm' : ''} ${isBookedByYou ? 'bg-state-booked-by-you' : isAvailable ? 'bg-state-available' : 'bg-state-unavailable'}`} onClick={() => handleSelectRoom(room.id)}>
-                <div className="mb-2 h-8 w-8 brutal-border bg-bg-canvas sm:h-10 sm:w-10" />
-                <p className="text-lg font-black">
+              <button key={room.id} type="button" className={`u-border-strong p-4 text-left ${isSelected ? 'bg-brand-primary text-white shadow-raised' : ''} ${isBookedByYou ? 'bg-status-booked-self' : isAvailable ? 'bg-status-available' : 'bg-status-unavailable'}`} onClick={() => handleSelectRoom(room.id)}>
+                <div className="mb-2 h-8 w-8 u-border-strong bg-bg-canvas sm:h-10 sm:w-10" />
+                <p className="text-lg font-bold">
                   <span className={isSelected ? 'text-white' : 'text-brand-primary'}>{buildingCode}</span>
                   <span>-</span>
-                  <span className={isSelected ? 'text-white' : 'text-danger'}>{roomNumber}</span>
+                  <span className={isSelected ? 'text-white' : 'text-status-danger'}>{roomNumber}</span>
                 </p>
                 <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-text-muted'}`}>{buildingNameByCode.get(buildingCode) ?? 'Unknown building'}</p>
-                <p className="mt-2 text-[11px] font-black uppercase tracking-wider">{isBookedByYou ? 'Booked by you' : isAvailable ? 'Available' : 'Unavailable'}</p>
+                <p className="mt-2 text-sm font-semibold tracking-wide">{isBookedByYou ? 'Booked by you' : isAvailable ? 'Available' : 'Unavailable'}</p>
               </button>
             )
           })
         )}
       </div>
 
-      <div ref={detailsRef} className="mt-4 brutal-border bg-white p-4">
-        <p className="mb-2 text-sm font-black uppercase tracking-wider">Room details</p>
+      <div ref={detailsRef} className="mt-4 u-border-strong bg-white p-4">
+        <p className="mb-2 text-sm font-bold uppercase tracking-wider">Room details</p>
         {!selectedRoom ? (
           <p className="text-sm font-semibold text-text-muted">Select a room card to inspect availability and details.</p>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1 text-sm font-semibold">
-              <p><span className="font-black">Room:</span> {selectedRoom.id}</p>
-              <p><span className="font-black">Building:</span> {selectedBuildingName}</p>
-              <p><span className="font-black">Time window:</span> {roomsFilter.day} {roomsFilter.fromTime}-{roomsFilter.toTime}</p>
+              <p><span className="font-bold">Room:</span> {selectedRoom.id}</p>
+              <p><span className="font-bold">Building:</span> {selectedBuildingName}</p>
+              <p><span className="font-bold">Time window:</span> {roomsFilter.day} {roomsFilter.fromTime}-{roomsFilter.toTime}</p>
             </div>
             <div className="space-y-1 text-sm font-semibold">
-              <p><span className="font-black">Status:</span> {selectedRoomBookedByYou ? 'Booked by you' : selectedRoomAvailability ? 'Available' : 'Unavailable'}</p>
+              <p><span className="font-bold">Status:</span> {selectedRoomBookedByYou ? 'Booked by you' : selectedRoomAvailability ? 'Available' : 'Unavailable'}</p>
               <p className="text-xs text-text-muted">Tip: Adjust Day/From/To filters to inspect this room at a different time.</p>
             </div>
           </div>
