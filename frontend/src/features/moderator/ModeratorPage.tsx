@@ -7,14 +7,14 @@ import type { Reservation } from '@/entities/reservation/model/types'
 import type { Room } from '@/entities/room/model/types'
 import type { AsyncActionRunner } from '@/shared/hooks/useAsyncAction'
 import { splitRoomId } from '@/shared/utils/roomId'
-import { moderatorApi } from './api/moderator.api'
+import { moderatorApi } from '@/features/moderator/api/moderator.api'
 
 const statusColorMap: Record<ReservationStatus, string> = {
   RESERVED: 'bg-brand-primary text-white',
   OCCUPIED: 'bg-brand-accent text-black',
-  NO_SHOW_RELEASED: 'bg-danger text-white',
-  CANCELLED: 'bg-neutral text-black',
-  COMPLETED: 'bg-success text-white'
+  NO_SHOW_RELEASED: 'bg-status-danger text-white',
+  CANCELLED: 'bg-border-default text-black',
+  COMPLETED: 'bg-status-success text-white'
 }
 
 type Props = {
@@ -57,24 +57,24 @@ function RoomActionsPanel({
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      <form className="brutal-border bg-white p-4" onSubmit={onCreateRoom}>
-        <p className="mb-2 text-sm font-black uppercase tracking-wider">Create room</p>
+      <form className="u-border-strong bg-white p-4" onSubmit={onCreateRoom}>
+        <p className="mb-2 text-sm font-bold uppercase tracking-wider">Create room</p>
         <input className={`${inputClass} mb-3`} value={adminRoomForm.newId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, newId: event.target.value }))} placeholder="A10-314" />
-        <button className="btn-brutal min-h-11 w-full bg-text-primary py-3 text-white" type="submit">Create</button>
+        <button className="btn-primary min-h-11 w-full bg-text-primary py-3 text-white" type="submit">Create</button>
       </form>
-      <form className="brutal-border bg-white p-4" onSubmit={onRenameRoom}>
-        <p className="mb-2 text-sm font-black uppercase tracking-wider">Rename room</p>
+      <form className="u-border-strong bg-white p-4" onSubmit={onRenameRoom}>
+        <p className="mb-2 text-sm font-bold uppercase tracking-wider">Rename room</p>
         <input className={`${inputClass} mb-2`} value={selectedRoomId} readOnly placeholder="Select room below" />
         <input className={`${inputClass} mb-3`} value={adminRoomForm.targetId} onChange={(event) => setAdminRoomForm((prev) => ({ ...prev, targetId: event.target.value }))} placeholder="Target" />
-        <button className="btn-brutal min-h-11 w-full bg-brand-accent py-3" type="submit">Update</button>
+        <button className="btn-primary min-h-11 w-full bg-brand-accent py-3" type="submit">Update</button>
       </form>
-      <div className="brutal-border bg-white p-4 md:col-span-2 xl:col-span-1">
-        <p className="mb-2 text-sm font-black uppercase tracking-wider">Delete room</p>
+      <div className="u-border-strong bg-white p-4 md:col-span-2 xl:col-span-1">
+        <p className="mb-2 text-sm font-bold uppercase tracking-wider">Delete room</p>
         <input className={`${inputClass} mb-3`} value={selectedRoomId} readOnly placeholder="Select room below" />
-        <button className="btn-brutal min-h-11 w-full bg-danger py-3 text-white" type="button" onClick={onDeleteRoom}>Delete</button>
+        <button className="btn-primary min-h-11 w-full bg-status-danger py-3 text-white" type="button" onClick={onDeleteRoom}>Delete</button>
       </div>
-      <div className="mt-0 brutal-border bg-bg-canvas p-4 md:col-span-2 xl:col-span-3">
-        <p className="mb-2 text-sm font-black uppercase tracking-wider">Rooms</p>
+      <div className="mt-0 u-border-strong bg-bg-canvas p-4 md:col-span-2 xl:col-span-3">
+        <p className="mb-2 text-sm font-bold uppercase tracking-wider">Rooms</p>
         <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
           {rooms.map((room) => {
             const { buildingCode, roomNumber } = splitRoomId(room.id)
@@ -82,13 +82,13 @@ function RoomActionsPanel({
               <button
                 key={room.id}
                 type="button"
-                className={`w-full brutal-border bg-white p-3 min-h-11 text-left ${selectedRoomId === room.id ? 'bg-brand-accent' : ''}`}
+                className={`w-full u-border-strong bg-white p-3 min-h-11 text-left ${selectedRoomId === room.id ? 'bg-brand-accent' : ''}`}
                 onClick={() => setSelectedRoomId(room.id)}
               >
-                <p className="font-black">
+                <p className="font-bold">
                   <span className="text-brand-primary">{buildingCode}</span>
                   <span>-</span>
-                  <span className="text-danger">{roomNumber}</span>
+                  <span className="text-status-danger">{roomNumber}</span>
                 </p>
               </button>
             )
@@ -118,19 +118,19 @@ function ReservationsPanel({
 }) {
   return (
     <div className="mt-4 grid gap-4 xl:grid-cols-2">
-      <div className="overflow-hidden brutal-border bg-bg-canvas p-4">
-        <p className="mb-2 text-sm font-black uppercase tracking-wider">Reservations</p>
+      <div className="overflow-hidden u-border-strong bg-bg-canvas p-4">
+        <p className="mb-2 text-sm font-bold uppercase tracking-wider">Reservations</p>
         <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
           {reservations.map((reservation) => (
-            <div key={reservation.id} className="overflow-hidden brutal-border bg-white p-3">
+            <div key={reservation.id} className="overflow-hidden u-border-strong bg-white p-3">
               <button
                 type="button"
                 className="min-h-11 w-full text-left"
                 onClick={() => setExpandedReservationId(expandedReservationId === reservation.id ? '' : reservation.id)}
               >
                 <div className="mb-1 flex flex-wrap items-center gap-2">
-                  <span className="break-all font-black">{reservation.id}</span>
-                  <span className={`whitespace-nowrap px-2 py-0.5 text-[10px] font-black uppercase ${statusColorMap[reservation.status]}`}>{reservation.status}</span>
+                  <span className="break-all font-bold">{reservation.id}</span>
+                  <span className={`whitespace-nowrap px-2 py-0.5 text-xs font-bold uppercase ${statusColorMap[reservation.status]}`}>{reservation.status}</span>
                 </div>
                 <p className="break-words text-xs font-semibold text-text-muted">{reservation.roomId} · {reservation.userId}</p>
               </button>
@@ -142,7 +142,7 @@ function ReservationsPanel({
                     <select className={`${inputClass} flex-1`} value={getDraftStatus(reservation)} onChange={(event) => onDraftStatusChange(reservation.id, event.target.value)}>
                       {RESERVATION_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
                     </select>
-                    <button className="btn-brutal w-full bg-danger px-4 py-2 min-h-11 text-white sm:w-auto" type="button" onClick={() => onUpdateStatus(reservation.id, getDraftStatus(reservation))}>Update</button>
+                    <button className="btn-primary w-full bg-status-danger px-4 py-2 min-h-11 text-white sm:w-auto" type="button" onClick={() => onUpdateStatus(reservation.id, getDraftStatus(reservation))}>Update</button>
                   </div>
                 </div>
               ) : null}
@@ -150,8 +150,8 @@ function ReservationsPanel({
           ))}
         </div>
       </div>
-      <div className="brutal-border bg-white p-4">
-        <p className="mb-2 text-sm font-black uppercase tracking-wider">How to manage</p>
+      <div className="u-border-strong bg-white p-4">
+        <p className="mb-2 text-sm font-bold uppercase tracking-wider">How to manage</p>
         <ol className="space-y-2 text-sm font-semibold text-text-muted">
           <li>1. Click any reservation row to expand it.</li>
           <li>2. Select a new status from the dropdown.</li>
@@ -240,9 +240,9 @@ export function ModeratorPage({
   return (
     <section className={panelClass}>
       <div className="mb-4 flex flex-wrap gap-2">
-        <h2 className="mr-auto text-2xl font-black uppercase tracking-tight">Moderator</h2>
-        <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => void reloadRooms()}>Load rooms</button>
-        <button className="btn-brutal bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => void reloadReservations()}>Load reservations</button>
+        <h2 className="mr-auto text-2xl font-bold uppercase tracking-tight">Moderator</h2>
+        <button className="btn-primary bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => void reloadRooms()}>Load rooms</button>
+        <button className="btn-primary bg-bg-canvas px-3 py-2 text-xs" type="button" onClick={() => void reloadReservations()}>Load reservations</button>
       </div>
 
       <RoomActionsPanel

@@ -6,10 +6,10 @@ import { ModeratorPage } from '@/pages/moderator/ModeratorPage'
 import { RoomsPage } from '@/pages/rooms/RoomsPage'
 import { useAsyncAction } from '@/shared/hooks/useAsyncAction'
 import type { AppView } from '@/shared/types/ui'
-import { APP_UI_CLASSES, APP_VIEWS } from './config/ui'
-import { useBuildingsCatalog } from './model/useBuildingsCatalog'
-import { useInitialDataLoad } from './model/useInitialDataLoad'
-import { useModeratorPolling } from './model/useModeratorPolling'
+import { APP_UI_CLASSES, APP_VIEWS } from '@/app/config/ui'
+import { useBuildingsCatalog } from '@/app/model/useBuildingsCatalog'
+import { useInitialDataLoad } from '@/app/model/useInitialDataLoad'
+import { useModeratorPolling } from '@/app/model/useModeratorPolling'
 
 export default function App() {
   const [view, setView] = useState<AppView>('BOOKING')
@@ -53,18 +53,19 @@ export default function App() {
   )
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[1500px] p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10">
-      <header className="mb-6 bg-bg-surface brutal-border shadow-brutal p-4 sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h1 className="mr-auto text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight">Focus Room - Booking System</h1>
+    <div className="mx-auto min-h-screen w-full max-w-[1500px] p-4 sm:p-6 md:p-8 lg:p-10 font-sans">
+      <header className="mb-8 u-surface-elevated p-5 sm:p-6 relative">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <h1 className="mr-auto text-3xl sm:text-4xl md:text-5xl font-heading tracking-tight u-header-inverse">Focus Room</h1>
+          <span className="u-text-hand text-text-muted mt-2 ml-2">Booking System</span>
         </div>
 
-        <nav className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+        <nav className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-6">
           {APP_VIEWS.map((item) => (
             <button
               key={item}
               type="button"
-              className={`btn-brutal px-3 py-3 text-xs ${view === item ? 'bg-text-primary text-white' : 'bg-white'}`}
+              className={`btn-primary px-4 py-3 text-sm tracking-wide ${view === item ? 'bg-text-primary text-white' : 'bg-white'}`}
               onClick={() => {
               setView(item)
               if (item === 'BOOKING' || item === 'ROOMS') {
@@ -79,9 +80,9 @@ export default function App() {
         </nav>
       </header>
 
-      <main className="space-y-6">
-        <div className={`brutal-border px-4 py-3 text-sm font-semibold ${message.startsWith('Error:') ? 'bg-danger text-white' : 'bg-bg-canvas text-text-primary'}`}>
-          {loading ? 'Loading...' : message}
+      <main className="space-y-8">
+        <div className={`u-border-strong px-4 py-3 text-sm font-semibold shadow-raised ${message.startsWith('Error:') ? 'bg-status-danger text-white' : 'bg-brand-accent text-text-primary'}`}>
+          <span className="u-text-hand mr-2">Note:</span> {loading ? 'Loading...' : message}
         </div>
 
         {view === 'BOOKING' ? (
@@ -135,14 +136,14 @@ export default function App() {
         ) : null}
       </main>
 
-      <footer className="mt-10 overflow-hidden bg-bg-surface brutal-border shadow-brutal">
+      <footer className="mt-12 bg-bg-surface u-border-strong shadow-elevated">
         <div className="grid md:grid-cols-[minmax(0,7fr)_minmax(220px,3fr)]">
-          <div className="px-5 py-5 md:px-6 md:py-6">
-            <p className="text-3xl font-black uppercase leading-none tracking-tight md:text-4xl">BOOKING SYSTEM</p>
-            <p className="mt-3 text-sm font-semibold text-text-muted">
+          <div className="px-5 py-6 md:px-8 md:py-8">
+            <p className="text-2xl font-bold tracking-tight md:text-3xl">BOOKING SYSTEM</p>
+            <p className="mt-2 text-sm text-text-muted">
               Project & implementation:{' '}
               <a
-                className="underline decoration-2 underline-offset-4 transition hover:text-brand-primary"
+                className="underline decoration-2 underline-offset-4 transition hover:text-brand-primary font-medium"
                 href="https://www.linkedin.com/in/norbert-fila/"
                 target="_blank"
                 rel="noreferrer"
@@ -153,7 +154,7 @@ export default function App() {
           </div>
 
           <a
-            className="flex min-h-[140px] items-center justify-center border-t-[3px] border-text-primary bg-brand-accent px-5 py-6 text-center text-sm font-black uppercase tracking-[0.18em] transition hover:bg-brand-primary hover:text-white md:min-h-full md:border-t-0 md:border-l-[3px]"
+            className="flex min-h-[140px] items-center justify-center border-t-2 border-text-primary bg-brand-accent px-5 py-6 text-center text-sm font-bold uppercase tracking-wider transition hover:bg-brand-primary hover:text-white md:min-h-full md:border-t-0 md:border-l-2"
             href={repoUrl}
             target="_blank"
             rel="noreferrer"

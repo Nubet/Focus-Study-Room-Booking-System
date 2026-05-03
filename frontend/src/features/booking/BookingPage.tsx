@@ -7,7 +7,7 @@ import { TIME_OPTIONS } from '@/shared/constants/time'
 import type { BookingStep } from '@/shared/types/ui'
 import { toIsoDateTime } from '@/shared/utils/dateTime'
 import { splitRoomId } from '@/shared/utils/roomId'
-import { bookingApi } from './api/booking.api'
+import { bookingApi } from '@/features/booking/api/booking.api'
 
 type Building = { code: string; name: string }
 
@@ -59,16 +59,16 @@ function BookingStepNavigation({
 }) {
   const stepStyles = (step: BookingStep) => {
     if (bookingStep === step) return 'bg-text-primary text-white'
-    if (bookingStep > step) return 'bg-success text-white'
+    if (bookingStep > step) return 'bg-status-success text-white'
     return 'bg-white text-text-primary'
   }
 
   return (
     <div className="mb-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
-      <button type="button" className={`brutal-border py-3 text-xs font-black uppercase sm:py-2 ${stepStyles(1)}`} onClick={() => onSelectStep(1)}>Step 1 room</button>
+      <button type="button" className={`u-border-strong py-3 text-xs font-bold uppercase sm:py-2 ${stepStyles(1)}`} onClick={() => onSelectStep(1)}>Step 1 room</button>
       <button
         type="button"
-        className={`brutal-border py-3 text-xs font-black uppercase sm:py-2 ${stepStyles(2)} ${canOpenStep2 ? '' : 'cursor-not-allowed opacity-60'}`}
+        className={`u-border-strong py-3 text-xs font-bold uppercase sm:py-2 ${stepStyles(2)} ${canOpenStep2 ? '' : 'cursor-not-allowed opacity-60'}`}
         onClick={onOpenStep2}
         disabled={!canOpenStep2}
       >
@@ -76,7 +76,7 @@ function BookingStepNavigation({
       </button>
       <button
         type="button"
-        className={`brutal-border py-3 text-xs font-black uppercase sm:py-2 ${stepStyles(3)} ${canOpenStep3 ? '' : 'cursor-not-allowed opacity-60'}`}
+        className={`u-border-strong py-3 text-xs font-bold uppercase sm:py-2 ${stepStyles(3)} ${canOpenStep3 ? '' : 'cursor-not-allowed opacity-60'}`}
         onClick={onOpenStep3}
         disabled={!canOpenStep3}
       >
@@ -105,14 +105,14 @@ function RoomSelectionStep({
     <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
       <div className="max-h-[40vh] space-y-2 overflow-y-auto pr-1 lg:max-h-130">
         {buildings.map((building) => (
-          <button key={building.code} type="button" className={`w-full brutal-border p-3 text-left ${activeBuildingCode === building.code ? 'bg-brand-accent' : 'bg-white'}`} onClick={() => setActiveBuildingCode(building.code)}>
-            <p className="text-sm font-black">{building.code}</p>
+          <button key={building.code} type="button" className={`w-full u-border-strong p-3 text-left ${activeBuildingCode === building.code ? 'bg-brand-accent' : 'bg-white'}`} onClick={() => setActiveBuildingCode(building.code)}>
+            <p className="text-sm font-bold">{building.code}</p>
             <p className="text-xs font-semibold text-text-muted">{building.name}</p>
           </button>
         ))}
       </div>
       <div>
-        <p className="mb-2 text-sm font-black uppercase tracking-wider">Select room from {activeBuildingCode}</p>
+        <p className="mb-2 text-sm font-bold uppercase tracking-wider">Select room from {activeBuildingCode}</p>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {roomsForActiveBuilding.length === 0 ? (
             <p className="text-sm font-semibold text-text-muted">No rooms available in this building.</p>
@@ -121,12 +121,12 @@ function RoomSelectionStep({
               const { buildingCode, roomNumber } = splitRoomId(room.id)
               const isSelected = selectedRoomId === room.id
               return (
-                <button key={room.id} type="button" className={`brutal-border p-4 text-left ${isSelected ? 'bg-brand-primary text-white' : 'bg-white'}`} onClick={() => onSelectRoom(room.id)}>
-                  <div className="mb-2 h-10 w-10 brutal-border bg-bg-canvas" />
-                  <p className="text-lg font-black">
+                <button key={room.id} type="button" className={`u-border-strong p-4 text-left ${isSelected ? 'bg-brand-primary text-white' : 'bg-white'}`} onClick={() => onSelectRoom(room.id)}>
+                  <div className="mb-2 h-10 w-10 u-border-strong bg-bg-canvas" />
+                  <p className="text-lg font-bold">
                     <span className={isSelected ? 'text-white' : 'text-brand-primary'}>{buildingCode}</span>
                     <span>-</span>
-                    <span className={isSelected ? 'text-white' : 'text-danger'}>{roomNumber}</span>
+                    <span className={isSelected ? 'text-white' : 'text-status-danger'}>{roomNumber}</span>
                   </p>
                   <p className="text-xs font-semibold">Live room</p>
                 </button>
@@ -163,10 +163,10 @@ function TimeSelectionStep({
   onContinue: () => void
 }) {
   return (
-    <div className="mx-auto max-w-2xl brutal-border bg-bg-canvas p-4 sm:p-5">
-      <p className="mb-3 text-sm font-black uppercase tracking-wider">Selected room</p>
+    <div className="mx-auto max-w-2xl u-border-strong bg-bg-canvas p-4 sm:p-5">
+      <p className="mb-3 text-sm font-bold uppercase tracking-wider">Selected room</p>
       <label className={labelClass}>Selected room (locked)</label>
-      <input className={`${inputClass} mb-4 cursor-not-allowed bg-neutral/20`} value={selectedRoomId} readOnly disabled placeholder="Select room in step 1" />
+      <input className={`${inputClass} mb-4 cursor-not-allowed bg-border-default/20`} value={selectedRoomId} readOnly disabled placeholder="Select room in step 1" />
       <div className="grid gap-3 sm:grid-cols-3">
         <div>
           <label className={labelClass}>Day</label>
@@ -208,8 +208,8 @@ function TimeSelectionStep({
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <button className="btn-brutal min-h-11 bg-white py-3" type="button" onClick={onBack}>Back</button>
-        <button className="btn-brutal min-h-11 bg-text-primary py-3 text-white" type="button" onClick={onContinue}>Continue</button>
+        <button className="btn-primary min-h-11 bg-white py-3" type="button" onClick={onBack}>Back</button>
+        <button className="btn-primary min-h-11 bg-text-primary py-3 text-white" type="button" onClick={onContinue}>Continue</button>
       </div>
     </div>
   )
@@ -236,36 +236,36 @@ function ConfirmationStep({
     : '-'
 
   return (
-    <div className="mx-auto max-w-lg brutal-border bg-white shadow-brutal">
+    <div className="mx-auto max-w-lg u-surface-elevated bg-white">
       <div className="border-b-[3px] border-dashed border-text-primary bg-brand-accent p-4 text-center sm:p-6">
-        <h3 className="text-xl font-black uppercase tracking-widest text-text-primary sm:text-2xl">Booking Ticket</h3>
-        <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-text-muted sm:text-xs">Final Confirmation</p>
+        <h3 className="text-xl font-bold uppercase tracking-widest text-text-primary sm:text-2xl">Booking Ticket</h3>
+        <p className="mt-1 text-sm font-semibold tracking-wide text-text-muted sm:text-xs">Final Confirmation</p>
       </div>
       <div className="space-y-4 bg-bg-canvas p-4 sm:space-y-5 sm:p-6">
         <div className="flex flex-wrap justify-between gap-4 border-b-[3px] border-text-primary pb-4 sm:flex-nowrap">
           <div className="w-full sm:w-auto">
-            <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Room</p>
-            <p className="mt-1 text-xl font-black leading-none text-brand-primary sm:text-2xl">{selectedRoomId || '-'}</p>
+            <p className="text-sm font-semibold tracking-wide text-text-muted">Room</p>
+            <p className="mt-1 text-xl font-bold leading-none text-brand-primary sm:text-2xl">{selectedRoomId || '-'}</p>
             <p className="mt-1 text-xs font-bold leading-tight text-text-primary sm:max-w-50">{selectedBuildingName}</p>
           </div>
           <div className="w-full sm:w-auto sm:text-right">
-            <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">User</p>
-            <p className="mt-1 text-lg font-black leading-none">{userId}</p>
+            <p className="text-sm font-semibold tracking-wide text-text-muted">User</p>
+            <p className="mt-1 text-lg font-bold leading-none">{userId}</p>
           </div>
         </div>
         <div className="flex flex-wrap justify-between gap-4 border-b-[3px] border-text-primary pb-4 sm:flex-nowrap">
           <div className="w-full sm:w-auto">
-            <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Date</p>
-            <p className="mt-1 text-lg font-black leading-none">{createReservation.day}</p>
+            <p className="text-sm font-semibold tracking-wide text-text-muted">Date</p>
+            <p className="mt-1 text-lg font-bold leading-none">{createReservation.day}</p>
           </div>
           <div className="w-full sm:w-auto sm:text-right">
-            <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Time Window</p>
-            <p className="mt-1 text-lg font-black leading-none">{createReservation.startTime} - {createReservation.endTime}</p>
+            <p className="text-sm font-semibold tracking-wide text-text-muted">Time Window</p>
+            <p className="mt-1 text-lg font-bold leading-none">{createReservation.startTime} - {createReservation.endTime}</p>
           </div>
         </div>
         <div className="flex items-center justify-between pt-2">
-          <p className="text-sm font-black uppercase tracking-wider">Total Duration</p>
-          <div className="brutal-border bg-brand-primary px-3 py-1 text-lg font-black text-white">
+          <p className="text-sm font-bold uppercase tracking-wider">Total Duration</p>
+          <div className="u-border-strong bg-brand-primary px-3 py-1 text-lg font-bold text-white">
             {durationHours} {durationHours === 1 ? 'HR' : 'HRS'}
           </div>
         </div>
@@ -273,12 +273,12 @@ function ConfirmationStep({
       <div className="border-t-[3px] border-dashed border-text-primary bg-white p-4 sm:p-6">
         <form onSubmit={onConfirm}>
           <div className="mb-5 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Internal ID (Auto-generated)</p>
+            <p className="text-sm font-semibold tracking-wide text-text-muted">Internal ID (Auto-generated)</p>
             <p className="mt-1 break-all font-mono text-xs font-semibold text-text-primary">{createReservation.id}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <button className="btn-brutal min-h-11 bg-bg-canvas py-3 text-xs font-black uppercase tracking-wider sm:text-sm" type="button" onClick={onBack}>Back</button>
-            <button className="btn-brutal min-h-11 bg-success py-3 text-xs font-black uppercase tracking-wider text-white hover:brightness-110 sm:text-sm" type="submit">Confirm</button>
+            <button className="btn-primary min-h-11 bg-bg-canvas py-3 text-sm font-semibold tracking-wide sm:text-sm" type="button" onClick={onBack}>Back</button>
+            <button className="btn-primary min-h-11 bg-status-success py-3 text-sm font-semibold tracking-wide text-white hover:brightness-110 sm:text-sm" type="submit">Confirm</button>
           </div>
         </form>
       </div>
@@ -403,12 +403,12 @@ export function BookingPage({
   return (
     <section className={panelClass}>
       <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <h2 className="mr-auto text-2xl font-black uppercase tracking-tight">Booking Wizard</h2>
-        <div className="flex w-full items-center gap-2 brutal-border bg-bg-canvas px-3 py-1 sm:w-auto">
-          <label htmlFor="simulate-login" className="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-text-muted">Simulate login as:</label>
-          <input id="simulate-login" className="min-h-11 w-full brutal-border bg-white px-2 py-1 text-xs font-semibold sm:min-h-0 sm:w-35" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
+        <h2 className="mr-auto text-2xl font-bold uppercase tracking-tight">Booking Wizard</h2>
+        <div className="flex w-full items-center gap-2 u-border-strong bg-bg-canvas px-3 py-1 sm:w-auto">
+          <label htmlFor="simulate-login" className="whitespace-nowrap text-sm font-semibold tracking-wide text-text-muted">Simulate login as:</label>
+          <input id="simulate-login" className="min-h-11 w-full u-border-strong bg-white px-2 py-1 text-xs font-semibold sm:min-h-0 sm:w-35" value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="User ID" />
         </div>
-        <button className="btn-brutal min-h-11 w-full bg-bg-canvas px-3 py-2 text-xs sm:min-h-0 sm:w-auto" type="button" onClick={() => void loadAvailableRooms({ day: createReservation.day, fromTime: createReservation.startTime, toTime: createReservation.endTime })}>Load available rooms</button>
+        <button className="btn-primary min-h-11 w-full bg-bg-canvas px-3 py-2 text-xs sm:min-h-0 sm:w-auto" type="button" onClick={() => void loadAvailableRooms({ day: createReservation.day, fromTime: createReservation.startTime, toTime: createReservation.endTime })}>Load available rooms</button>
       </div>
 
       <BookingStepNavigation
