@@ -1,14 +1,11 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import type { Reservation } from '@/entities/reservation/model/types'
 import type { Room } from '@/entities/room/model/types'
-import { moderatorApi } from '@/features/moderator/api/moderator.api'
-import { buildReservationsQuerySuffix } from '@/features/moderator/model/query'
-import { buildRoomWeekSchedule } from '@/features/rooms/model/availabilitySchedule'
+import { RoomAvailabilitySchedule } from '@/features/rooms/ui/RoomAvailabilitySchedule'
+import { useRoomWeeklySchedule } from '@/features/rooms/model/useRoomWeeklySchedule'
 import { TIME_OPTIONS } from '@/shared/constants/time'
 import type { RoomSort, RoomStatusFilter } from '@/shared/types/ui'
 import { splitRoomId } from '@/shared/utils/roomId'
-import { toIsoDateTime } from '@/shared/utils/dateTime'
 import type { RoomsFilterState } from '@/features/rooms/model/types'
 
 type BuildingMap = Map<string, string>
@@ -207,9 +204,6 @@ export function RoomsPage({
 }: Props) {
   const roomIdCollator = useMemo(() => new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }), [])
   const [selectedRoomId, setSelectedRoomId] = useState('')
-  const [selectedRoomReservations, setSelectedRoomReservations] = useState<Reservation[]>([])
-  const [scheduleLoading, setScheduleLoading] = useState(false)
-  const [scheduleError, setScheduleError] = useState('')
   const detailsRef = useRef<HTMLDivElement | null>(null)
 
   const fromTimeOptions = useMemo(() => {
@@ -253,61 +247,14 @@ export function RoomsPage({
     detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }
 
-  useEffect(() => {
-    if (!selectedRoomId) {
-      setSelectedRoomReservations([])
-      setScheduleError('')
-      setScheduleLoading(false)
-      return
+  const { weekSchedule, loading: scheduleLoading, error: scheduleError } = useRoomWeeklySchedule(
+    {
+      selectedRoomId,
+      day: roomsFilter.day,
+      userId,
+      adminHeaders
     }
-
-    const from = toIsoDateTime(roomsFilter.day, '00:00')
-    const weekEnd = new Date(from)
-    weekEnd.setDate(weekEnd.getDate() + 7)
-
-    setScheduleLoading(true)
-    setScheduleError('')
-
-    void moderatorApi
-      .getReservations(
-        buildReservationsQuerySuffix({
-          status: '',
-          roomId: selectedRoomId,
-          from,
-          to: weekEnd.toISOString()
-        }),
-        adminHeaders
-      )
-      .then((result) => {
-        setSelectedRoomReservations(result)
-      })
-      .catch(() => {
-        setSelectedRoomReservations([])
-        setScheduleError('Could not load room schedule for this day.')
-      })
-      .finally(() => {
-        setScheduleLoading(false)
-      })
-  }, [adminHeaders, roomsFilter.day, selectedRoomId])
-
-  const selectedRoomWeekSchedule = useMemo(
-    () => buildRoomWeekSchedule(roomsFilter.day, selectedRoomReservations, userId),
-    [roomsFilter.day, selectedRoomReservations, userId]
   )
-
-  const slotClassByStatus: Record<string, string> = {
-    AVAILABLE: 'bg-status-available',
-    BOOKED: 'bg-status-unavailable',
-    BOOKED_BY_YOU: 'bg-status-booked-self',
-    RELEASED: 'bg-bg-canvas'
-  }
-
-  const dayLabel = (day: string) =>
-    new Date(`${day}T00:00:00`).toLocaleDateString('pl-PL', {
-      weekday: 'short',
-      day: '2-digit',
-      month: '2-digit'
-    })
 
   return (
     <section className={panelClass}>
@@ -377,60 +324,13 @@ export function RoomsPage({
         )}
       </div>
 
-      <div className="mt-4 u-border-strong bg-white p-4">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <p className="text-sm font-bold uppercase tracking-wider">Availability schedule</p>
-          {selectedRoom ? (
-            <span className="text-xs font-semibold text-text-muted">{selectedRoom.id} on {roomsFilter.day}</span>
-          ) : null}
-        </div>
-
-        {!selectedRoom ? (
-          <p className="text-sm font-semibold text-text-muted">Select a room to view its day schedule.</p>
-        ) : scheduleLoading ? (
-          <p className="text-sm font-semibold text-text-muted">Loading schedule...</p>
-        ) : scheduleError ? (
-          <p className="text-sm font-semibold text-status-danger">{scheduleError}</p>
-        ) : (
-          <>
-            <div className="mb-3 flex flex-wrap gap-2 text-xs font-semibold">
-              <span className="u-border-strong bg-status-available px-2 py-1">Available</span>
-              <span className="u-border-strong bg-status-booked-self px-2 py-1">Booked by you</span>
-              <span className="u-border-strong bg-status-unavailable px-2 py-1">Booked</span>
-              <span className="u-border-strong bg-bg-canvas px-2 py-1">Released / no-show</span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <div className="min-w-[760px] u-border-strong bg-white p-2">
-                <div className="grid grid-cols-8 gap-1">
-                  <div className="p-1 text-xs font-bold uppercase tracking-wider text-text-muted">Hour</div>
-                  {selectedRoomWeekSchedule.map((day) => (
-                    <div key={day.day} className="p-1 text-center text-xs font-bold uppercase tracking-wide text-text-muted">
-                      {dayLabel(day.day)}
-                    </div>
-                  ))}
-
-                  {TIME_OPTIONS.slice(0, -1).map((timeLabel, index) => (
-                    <Fragment key={timeLabel}>
-                      <div className="p-1 text-xs font-semibold text-text-muted">{timeLabel}</div>
-                      {selectedRoomWeekSchedule.map((day) => {
-                        const slot = day.slots[index]
-                        return (
-                          <div
-                            key={`${day.day}-${slot.key}`}
-                            className={`h-8 u-border-strong ${slotClassByStatus[slot.status]}`}
-                            title={`${day.day} ${slot.from}-${slot.to}: ${slot.status.replaceAll('_', ' ')}`}
-                          />
-                        )
-                      })}
-                    </Fragment>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      <RoomAvailabilitySchedule
+        selectedRoomId={selectedRoomId}
+        day={roomsFilter.day}
+        weekSchedule={weekSchedule}
+        loading={scheduleLoading}
+        error={scheduleError}
+      />
     </section>
   )
 }
