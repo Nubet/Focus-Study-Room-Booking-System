@@ -2,12 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { bookingApi } from '@/features/booking/api/booking.api'
 import type { Reservation } from '@/entities/reservation/model/types'
 import type { AsyncActionRunner } from '@/shared/hooks/useAsyncAction'
+import QRCode from 'qrcode'
 
 type Props = {
   userId: string
   run: AsyncActionRunner
   setMessage: (value: string) => void
   panelClass: string
+}
+
+type AccessCodeState = {
+  pin: string
+  qrPayload: string
+  qrImageDataUrl: string
+  expiresAt: string
 }
 
 const cancellableStatuses = new Set(['RESERVED', 'OCCUPIED'])
@@ -20,6 +28,8 @@ function formatDateTime(value: string): string {
 
 export function MyBookingsPage({ userId, run, setMessage, panelClass }: Props) {
   const [reservations, setReservations] = useState<Reservation[]>([])
+  const [expandedReservationId, setExpandedReservationId] = useState<string | null>(null)
+  const [accessCodesByReservationId, setAccessCodesByReservationId] = useState<Record<string, AccessCodeState>>({})
 
   const sortedReservations = useMemo(
     () => [...reservations].sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()),
@@ -43,6 +53,30 @@ export function MyBookingsPage({ userId, run, setMessage, panelClass }: Props) {
       await bookingApi.cancelReservation(reservationId)
       setReservations((prev) => prev.map((item) => (item.id === reservationId ? { ...item, status: 'CANCELLED' } : item)))
       setMessage(`Reservation cancelled: ${reservationId}`)
+    })
+  }
+
+  const toggleAccessCodes = (reservation: Reservation) => {
+    if (expandedReservationId === reservation.id) {
+      setExpandedReservationId(null)
+      return
+    }
+
+    void run(async () => {
+      const accessCodes = await bookingApi.getAccessCodes(reservation.id, userId)
+      const qrImageDataUrl = await QRCode.toDataURL(accessCodes.qrPayload, { margin: 1, width: 260 })
+
+      setAccessCodesByReservationId((prev) => ({
+        ...prev,
+        [reservation.id]: {
+          pin: accessCodes.pin,
+          qrPayload: accessCodes.qrPayload,
+          qrImageDataUrl,
+          expiresAt: accessCodes.expiresAt
+        }
+      }))
+      setExpandedReservationId(reservation.id)
+      setMessage(`Access codes prepared for ${reservation.id}.`)
     })
   }
 
@@ -80,14 +114,36 @@ export function MyBookingsPage({ userId, run, setMessage, panelClass }: Props) {
                 </div>
 
                 <div className="mt-4">
-                  <button
-                    className={`btn-primary min-h-11 px-4 py-2 text-sm ${canCancel ? 'bg-status-danger text-white' : 'bg-border-default text-text-muted'}`}
-                    type="button"
-                    disabled={!canCancel}
-                    onClick={() => cancelReservation(reservation.id)}
-                  >
-                    {canCancel ? 'Cancel reservation' : 'Cannot cancel'}
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      className={`btn-primary min-h-11 px-4 py-2 text-sm ${canCancel ? 'bg-status-danger text-white' : 'bg-border-default text-text-muted'}`}
+                      type="button"
+                      disabled={!canCancel}
+                      onClick={() => cancelReservation(reservation.id)}
+                    >
+                      {canCancel ? 'Cancel reservation' : 'Cannot cancel'}
+                    </button>
+                    <button
+                      className="btn-primary min-h-11 bg-bg-canvas px-4 py-2 text-sm"
+                      type="button"
+                      onClick={() => toggleAccessCodes(reservation)}
+                    >
+                      {expandedReservationId === reservation.id ? 'Hide PIN and QR' : 'Show PIN and QR'}
+                    </button>
+                  </div>
+
+                  {expandedReservationId === reservation.id && accessCodesByReservationId[reservation.id] ? (
+                    <div className="mt-3 u-border-strong bg-bg-canvas p-3">
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider">Check-in access</p>
+                      <p className="mb-2 text-sm"><span className="font-semibold">PIN:</span> {accessCodesByReservationId[reservation.id].pin}</p>
+                      <img
+                        className="u-border-strong bg-white p-2"
+                        src={accessCodesByReservationId[reservation.id].qrImageDataUrl}
+                        alt={`Check-in QR for ${reservation.id}`}
+                      />
+                      <p className="mt-2 text-xs text-text-muted">QR expires at: {formatDateTime(accessCodesByReservationId[reservation.id].expiresAt)}</p>
+                    </div>
+                  ) : null}
                 </div>
               </article>
             )
