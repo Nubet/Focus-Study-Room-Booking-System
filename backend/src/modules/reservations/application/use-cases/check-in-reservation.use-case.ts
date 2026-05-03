@@ -4,7 +4,6 @@ import {
   ReservationNotFoundError,
   ReservationStateConflictError
 } from "../../domain/errors/reservation-errors.js";
-import { verifySignedQrPayload } from "../../../../shared/security/qr-signed-payload-verifier.js";
 
 type CheckInMethod = "PIN" | "QR";
 
@@ -18,6 +17,13 @@ type CheckInReservationInput = {
 type ReservationRepository = {
   findById: (id: string) => Promise<Reservation | null>;
   save: (reservation: Reservation) => Promise<void>;
+  consumeCheckInCode: (input: {
+    reservationId: string;
+    userId: string;
+    method: CheckInMethod;
+    code: string;
+    now: Date;
+  }) => Promise<boolean>;
 };
 
 export class CheckInReservationUseCase {
@@ -46,22 +52,16 @@ export class CheckInReservationUseCase {
       throw new InvalidAccessCodeError();
     }
 
-    if (input.method === "PIN" && input.code !== "123456") {
+    const isValidCode = await this.reservationRepository.consumeCheckInCode({
+      reservationId: reservation.id,
+      userId: input.userId,
+      method: input.method,
+      code: input.code,
+      now
+    });
+
+    if (!isValidCode) {
       throw new InvalidAccessCodeError();
-    }
-
-    if (input.method === "QR") {
-      const secret = process.env.QR_SIGNING_SECRET ?? "dev-qr-secret";
-      const isValid = verifySignedQrPayload({
-        code: input.code,
-        reservationId: reservation.id,
-        userId: input.userId,
-        secret
-      });
-
-      if (!isValid) {
-        throw new InvalidAccessCodeError();
-      }
     }
 
     reservation.markOccupied(now);

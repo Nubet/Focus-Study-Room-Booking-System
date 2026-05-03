@@ -1,24 +1,28 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Reservation as PrismaReservationModel } from "@prisma/client";
 import { Reservation, ReservationStatus } from "../../domain/entities/reservation.js";
+import { hashAccessCode } from "../../../../shared/security/check-in-code-hash.js";
+import {
+  ConsumeCheckInCodeInput,
+  ReservationRepository,
+  ReservationFilter,
+  UpsertCheckInCodeInput
+} from "../../domain/repositories/reservation-repository.js";
 
-
-import { ReservationRepository, ReservationFilter } from "../../domain/repositories/reservation-repository.js";
-
-export class PrismaReservationRepository implements ReservationRepository  {
+export class PrismaReservationRepository implements ReservationRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   private isBlockingStatus(status: Reservation["status"]): boolean {
     return status === "RESERVED" || status === "OCCUPIED";
   }
 
-  private toDomain(model: any): Reservation {
+  private toDomain(model: PrismaReservationModel): Reservation {
     const res = Reservation.create({
       id: model.id,
       roomId: model.roomId,
       userId: model.userId,
       startTime: model.startTime,
-      endTime: model.endTime,
-    });
+        endTime: model.endTime
+      });
     res.status = model.status as ReservationStatus;
     if (model.checkedInAt) {
       res.checkedInAt = model.checkedInAt;
@@ -35,7 +39,7 @@ export class PrismaReservationRepository implements ReservationRepository  {
         startTime: reservation.startTime,
         endTime: reservation.endTime,
         status: reservation.status,
-        checkedInAt: reservation.checkedInAt,
+        checkedInAt: reservation.checkedInAt
       },
       create: {
         id: reservation.id,
@@ -44,8 +48,8 @@ export class PrismaReservationRepository implements ReservationRepository  {
         startTime: reservation.startTime,
         endTime: reservation.endTime,
         status: reservation.status,
-        checkedInAt: reservation.checkedInAt,
-      },
+        checkedInAt: reservation.checkedInAt
+      }
     });
   }
 
@@ -59,15 +63,15 @@ export class PrismaReservationRepository implements ReservationRepository  {
         roomId,
         status: { in: ["RESERVED", "OCCUPIED"] },
         startTime: { lt: endTime },
-        endTime: { gt: startTime },
-      },
+        endTime: { gt: startTime }
+      }
     });
     return models.map(this.toDomain);
   }
 
   async findById(id: string): Promise<Reservation | null> {
     const model = await this.prisma.reservation.findUnique({
-      where: { id },
+      where: { id }
     });
     if (!model) return null;
     return this.toDomain(model);
@@ -75,7 +79,7 @@ export class PrismaReservationRepository implements ReservationRepository  {
 
   async findByUserId(userId: string): Promise<Reservation[]> {
     const models = await this.prisma.reservation.findMany({
-      where: { userId },
+      where: { userId }
     });
     return models.map(this.toDomain);
   }
@@ -85,8 +89,8 @@ export class PrismaReservationRepository implements ReservationRepository  {
       where: {
         status: { in: ["RESERVED", "OCCUPIED"] },
         startTime: { lt: endTime },
-        endTime: { gt: startTime },
-      },
+        endTime: { gt: startTime }
+      }
     });
     return models.map(this.toDomain);
   }
@@ -103,7 +107,7 @@ export class PrismaReservationRepository implements ReservationRepository  {
       if (filter.from && filter.to) {
         where.AND = [
           { startTime: { gte: filter.from } },
-          { endTime: { lte: filter.to } },
+          { endTime: { lte: filter.to } }
         ];
       } else if (filter.from) {
         where.startTime = { gte: filter.from };
@@ -114,5 +118,43 @@ export class PrismaReservationRepository implements ReservationRepository  {
 
     const models = await this.prisma.reservation.findMany({ where });
     return models.map(this.toDomain);
+  }
+
+  async upsertCheckInCode(input: UpsertCheckInCodeInput): Promise<void> {
+    await this.prisma.checkInCode.upsert({
+      where: { reservationId: input.reservationId },
+      update: {
+        userId: input.userId,
+        pinHash: input.pinHash,
+        qrHash: input.qrHash,
+        expiresAt: input.expiresAt,
+        usedAt: null
+      },
+      create: {
+        reservationId: input.reservationId,
+        userId: input.userId,
+        pinHash: input.pinHash,
+        qrHash: input.qrHash,
+        expiresAt: input.expiresAt
+      }
+    });
+  }
+
+  async consumeCheckInCode(input: ConsumeCheckInCodeInput): Promise<boolean> {
+    const codeHash = hashAccessCode(input.code);
+    const where = {
+      reservationId: input.reservationId,
+      userId: input.userId,
+      usedAt: null,
+      expiresAt: { gt: input.now },
+      ...(input.method === "PIN" ? { pinHash: codeHash } : { qrHash: codeHash })
+    };
+
+    const result = await this.prisma.checkInCode.updateMany({
+      where,
+      data: { usedAt: input.now }
+    });
+
+    return result.count === 1;
   }
 }
