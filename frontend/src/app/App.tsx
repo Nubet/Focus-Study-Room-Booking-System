@@ -6,10 +6,10 @@ import { ModeratorPage } from '@/pages/moderator/ModeratorPage'
 import { RoomsPage } from '@/pages/rooms/RoomsPage'
 import { useAsyncAction } from '@/shared/hooks/useAsyncAction'
 import type { AppView } from '@/shared/types/ui'
-import { APP_UI_CLASSES, APP_VIEWS } from '@/app/config/ui'
-import { useBuildingsCatalog } from '@/app/model/useBuildingsCatalog'
-import { useInitialDataLoad } from '@/app/model/useInitialDataLoad'
-import { useModeratorPolling } from '@/app/model/useModeratorPolling'
+import { APP_UI_CLASSES, APP_VIEWS } from './config/ui'
+import { useBuildingsCatalog } from './model/useBuildingsCatalog'
+import { useInitialDataLoad } from './model/useInitialDataLoad'
+import { useModeratorPolling } from './model/useModeratorPolling'
 
 export default function App() {
   const [view, setView] = useState<AppView>('BOOKING')
@@ -53,7 +53,7 @@ export default function App() {
   )
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[1500px] p-4 sm:p-6 md:p-8 lg:p-10 font-sans">
+    <div className="mx-auto min-h-screen w-full max-w-375 p-4 sm:p-6 md:p-8 lg:p-10 font-sans">
       <header className="mb-8 u-surface-elevated p-5 sm:p-6 relative">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <h1 className="mr-auto text-3xl sm:text-4xl md:text-5xl font-heading tracking-tight u-header-inverse">Focus Room</h1>
@@ -154,7 +154,7 @@ export default function App() {
           </div>
 
           <a
-            className="flex min-h-[140px] items-center justify-center border-t-2 border-text-primary bg-brand-accent px-5 py-6 text-center text-sm font-bold uppercase tracking-wider transition hover:bg-brand-primary hover:text-white md:min-h-full md:border-t-0 md:border-l-2"
+            className="flex min-h-35 items-center justify-center border-t-2 border-text-primary bg-brand-accent px-5 py-6 text-center text-sm font-bold uppercase tracking-wider transition hover:bg-brand-primary hover:text-white md:min-h-full md:border-t-0 md:border-l-2"
             href={repoUrl}
             target="_blank"
             rel="noreferrer"
