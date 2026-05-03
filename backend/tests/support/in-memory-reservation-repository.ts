@@ -1,11 +1,18 @@
 import { Reservation } from '@src/modules/reservations/domain/entities/reservation.js'
 import type {
+  ConsumeCheckInCodeInput,
   ReservationFilter,
-  ReservationRepository
+  ReservationRepository,
+  UpsertCheckInCodeInput
 } from '@src/modules/reservations/domain/repositories/reservation-repository.js'
+import { hashAccessCode } from '@src/shared/security/check-in-code-hash.js'
 
 export class InMemoryReservationRepository implements ReservationRepository {
   private readonly items = new Map<string, Reservation>()
+  private readonly checkInCodes = new Map<
+    string,
+    { userId: string; pinHash: string; qrHash: string; expiresAt: Date; usedAt: Date | null }
+  >()
 
   private isBlockingStatus(status: Reservation['status']): boolean {
     return status === 'RESERVED' || status === 'OCCUPIED'
@@ -55,5 +62,31 @@ export class InMemoryReservationRepository implements ReservationRepository {
       }
       return true
     })
+  }
+
+  async upsertCheckInCode(input: UpsertCheckInCodeInput): Promise<void> {
+    this.checkInCodes.set(input.reservationId, {
+      userId: input.userId,
+      pinHash: input.pinHash,
+      qrHash: input.qrHash,
+      expiresAt: input.expiresAt,
+      usedAt: null
+    })
+  }
+
+  async consumeCheckInCode(input: ConsumeCheckInCodeInput): Promise<boolean> {
+    const code = this.checkInCodes.get(input.reservationId)
+    if (!code) return false
+    if (code.userId !== input.userId) return false
+    if (code.usedAt) return false
+    if (code.expiresAt <= input.now) return false
+
+    const codeHash = hashAccessCode(input.code)
+
+    const isCodeMatch = input.method === 'PIN' ? code.pinHash === codeHash : code.qrHash === codeHash
+    if (!isCodeMatch) return false
+
+    this.checkInCodes.set(input.reservationId, { ...code, usedAt: input.now })
+    return true
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildTestApp as buildApp } from "../support/build-test-app.js";
 import { createHmac } from "node:crypto";
+import type { FastifyInstance } from "fastify";
 
 const toBase64Url = (value: string): string => Buffer.from(value).toString("base64url");
 
@@ -20,6 +21,17 @@ const createActiveReservationWindow = (): { startTime: string; endTime: string }
   };
 };
 
+const issueAccessCodes = async (app: FastifyInstance, reservationId: string, userId: string) => {
+  const response = await app.inject({
+    method: "POST",
+    url: `/reservations/${reservationId}/access-codes`,
+    payload: { userId }
+  });
+
+  expect(response.statusCode).toBe(200);
+  return response.json() as { pin: string; qrPayload: string };
+};
+
 describe("check-in route", () => {
   it("returns 200 and occupied status for valid PIN check-in", async () => {
     const app = buildApp();
@@ -37,12 +49,14 @@ describe("check-in route", () => {
       }
     });
 
+    const accessCodes = await issueAccessCodes(app, "res-801", "user-1");
+
     const response = await app.inject({
       method: "POST",
       url: "/reservations/res-801/check-in",
       payload: {
         method: "PIN",
-        code: "123456",
+        code: accessCodes.pin,
         userId: "user-1"
       }
     });
@@ -164,24 +178,14 @@ describe("check-in route", () => {
       }
     });
 
-    const qrCode = createSignedQrPayload(
-      {
-        type: "CHECK_IN_QR",
-        reservationId: "res-804",
-        userId: "user-4",
-        iat: 1760000000,
-        exp: 4102444800,
-        nonce: "nonce-1"
-      },
-      "dev-qr-secret"
-    );
+    const accessCodes = await issueAccessCodes(app, "res-804", "user-4");
 
     const response = await app.inject({
       method: "POST",
       url: "/reservations/res-804/check-in",
       payload: {
         method: "QR",
-        code: qrCode,
+        code: accessCodes.qrPayload,
         userId: "user-4"
       }
     });
@@ -206,19 +210,9 @@ describe("check-in route", () => {
       }
     });
 
-    const validQrCode = createSignedQrPayload(
-      {
-        type: "CHECK_IN_QR",
-        reservationId: "res-805",
-        userId: "user-5",
-        iat: 1760000000,
-        exp: 4102444800,
-        nonce: "nonce-2"
-      },
-      "dev-qr-secret"
-    );
+    const accessCodes = await issueAccessCodes(app, "res-805", "user-5");
 
-    const tamperedQrCode = `${validQrCode}tampered`;
+    const tamperedQrCode = `${accessCodes.qrPayload}tampered`;
 
     const response = await app.inject({
       method: "POST",
