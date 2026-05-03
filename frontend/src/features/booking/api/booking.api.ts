@@ -7,5 +7,11 @@ export const bookingApi = {
     request<Reservation>('/reservations', {
       method: 'POST',
       body: JSON.stringify(payload)
+    }),
+  getMyReservations: (userId: string) =>
+    request<Reservation[]>(`/reservations/me?userId=${encodeURIComponent(userId)}`),
+  cancelReservation: (reservationId: string) =>
+    request<Reservation>(`/reservations/${encodeURIComponent(reservationId)}`, {
+      method: 'DELETE'
     })
 }

@@ -1,6 +1,6 @@
 import type { AppView } from '@/shared/types/ui.ts'
 
-export const APP_VIEWS: AppView[] = ['BOOKING', 'ROOMS', 'MODERATOR']
+export const APP_VIEWS: AppView[] = ['BOOKING', 'ROOMS', 'MY_BOOKINGS', 'MODERATOR']
 
 export const APP_UI_CLASSES = {
   panelClass: 'u-surface-elevated p-5 sm:p-6 md:p-8',

@@ -3,6 +3,7 @@ import { EMPTY_MODERATOR_RESERVATION_FILTER } from '@/features/moderator/model/r
 import { sharedDayOptions, useRoomsData } from '@/features/rooms/model/useRoomsData'
 import { BookingPage } from '@/pages/booking/BookingPage'
 import { ModeratorPage } from '@/pages/moderator/ModeratorPage'
+import { MyBookingsPage } from '@/pages/my-bookings/MyBookingsPage'
 import { RoomsPage } from '@/pages/rooms/RoomsPage'
 import { useAsyncAction } from '@/shared/hooks/useAsyncAction'
 import type { AppView } from '@/shared/types/ui'
@@ -60,7 +61,7 @@ export default function App() {
           <span className="u-text-hand text-text-muted mt-2 ml-2">Booking System</span>
         </div>
 
-        <nav className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-6">
+        <nav className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
           {APP_VIEWS.map((item) => (
             <button
               key={item}
@@ -74,7 +75,7 @@ export default function App() {
               }
               }}
             >
-              {item}
+              {item.replace('_', ' ')}
             </button>
           ))}
         </nav>
@@ -132,6 +133,15 @@ export default function App() {
             reloadReservations={() =>
               loadModeratorReservations(adminHeaders, EMPTY_MODERATOR_RESERVATION_FILTER)
             }
+          />
+        ) : null}
+
+        {view === 'MY_BOOKINGS' ? (
+          <MyBookingsPage
+            userId={userId}
+            run={run}
+            setMessage={setMessage}
+            panelClass={panelClass}
           />
         ) : null}
       </main>
