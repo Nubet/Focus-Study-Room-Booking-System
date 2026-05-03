@@ -1,7 +1,7 @@
 import type { Building } from '@/entities/building/model/types'
-import type { Reservation } from '../../../entities/reservation/model/types'
-import type { Room } from '../../../entities/room/model/types'
-import { request } from '../../../shared/api/httpClient'
+import type { Reservation } from '@/entities/reservation/model/types.ts'
+import type { Room } from '@/entities/room/model/types.ts'
+import { request } from '@/shared/api/httpClient.ts'
 import { buildReservationsQuerySuffix } from '@/features/moderator/model/query'
 
 export const roomsApi = {
