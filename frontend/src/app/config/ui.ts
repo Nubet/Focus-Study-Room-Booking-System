@@ -1,4 +1,4 @@
-import type { AppView } from '../../shared/types/ui'
+import type { AppView } from '@/shared/types/ui.ts'
 
 export const APP_VIEWS: AppView[] = ['BOOKING', 'ROOMS', 'MODERATOR']
 
