@@ -107,6 +107,8 @@ export default function App() {
             panelClass={panelClass}
             inputClass={inputClass}
             labelClass={labelClass}
+            userId={userId}
+            adminHeaders={adminHeaders}
             rooms={rooms}
             roomsFilter={roomsFilter}
             setRoomsFilter={setRoomsFilter}
