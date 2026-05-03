@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { CancelReservationUseCase } from "../../application/use-cases/cancel-reservation.use-case.js";
 import { CheckInReservationUseCase } from "../../application/use-cases/check-in-reservation.use-case.js";
 import { CreateReservationUseCase } from "../../application/use-cases/create-reservation.use-case.js";
+import { IssueReservationAccessCodesUseCase } from "../../application/use-cases/issue-reservation-access-codes.use-case.js";
 import { ListMyReservationsUseCase } from "../../application/use-cases/list-my-reservations.use-case.js";
 import { mapErrorToResponse } from "../../../../shared/http/map-error-to-response.js";
 import { ReservationRepository } from "../../domain/repositories/reservation-repository.js";
@@ -22,7 +23,66 @@ export const registerReservationsRoutes = (
   const createReservationUseCase = new CreateReservationUseCase(reservationRepository);
   const cancelReservationUseCase = new CancelReservationUseCase(reservationRepository);
   const checkInReservationUseCase = new CheckInReservationUseCase(reservationRepository);
+  const issueReservationAccessCodesUseCase = new IssueReservationAccessCodesUseCase(reservationRepository);
   const listMyReservationsUseCase = new ListMyReservationsUseCase(reservationRepository);
+
+  app.post(
+    "/reservations/:id/access-codes",
+    {
+      schema: {
+        tags: ["reservations"],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } }
+        },
+        body: {
+          type: "object",
+          required: ["userId"],
+          properties: {
+            userId: { type: "string", minLength: 1 }
+          }
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              reservationId: { type: "string" },
+              pin: { type: "string" },
+              qrPayload: { type: "string" },
+              expiresAt: { type: "string", format: "date-time" }
+            }
+          },
+          400: { type: "object", properties: { message: { type: "string" } } },
+          404: { type: "object", properties: { message: { type: "string" } } },
+          409: { type: "object", properties: { message: { type: "string" } } },
+          500: { type: "object", properties: { message: { type: "string" } } }
+        }
+      }
+    },
+    async (request, reply) => {
+      const params = request.params as { id?: string };
+      const body = request.body as { userId?: string };
+
+      try {
+        if (!isNonEmptyString(params.id) || !isNonEmptyString(body.userId)) {
+          throw new InvalidPayloadError();
+        }
+
+        const accessCodes = await issueReservationAccessCodesUseCase.execute({
+          reservationId: params.id,
+          userId: body.userId
+        });
+
+        return reply.status(200).send(accessCodes);
+      } catch (error) {
+        const mapped = mapErrorToResponse(error);
+        return reply
+          .status(mapped.statusCode as 200 | 400 | 404 | 409 | 500)
+          .send({ message: mapped.message });
+      }
+    }
+  );
 
   app.post(
     "/reservations",
