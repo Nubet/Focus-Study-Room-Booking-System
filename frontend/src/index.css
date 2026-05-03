@@ -38,7 +38,7 @@
   body {
     background-color: var(--color-bg-canvas);
     color: var(--color-text-primary);
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     -webkit-font-smoothing: antialiased;
 
     background-image: radial-gradient(#d1cdd2 1px, transparent 1px);
@@ -46,7 +46,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+    font-family: var(--font-heading, sans-serif);
     letter-spacing: -0.02em;
     font-weight: 800;
   }
@@ -121,14 +121,14 @@
   .u-header-inverse {
     background-color: var(--color-text-primary);
     color: var(--color-bg-surface);
-    font-family: var(--font-heading);
+    font-family: var(--font-heading, sans-serif);
     padding: 0.5rem 1rem;
     border-radius: 6px;
     display: inline-block;
   }
 
   .u-text-hand {
-    font-family: var(--font-accent-hand);
+    font-family: var(--font-accent-hand, cursive);
     font-size: 1.1em;
   }
   
