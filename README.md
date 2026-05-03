@@ -117,6 +117,20 @@ Then open `http://localhost:5173` in your browser.
 - Admin room management uses `GET/POST/PATCH/DELETE /admin/rooms`.
 - Reservation moderation uses `GET /admin/reservations` and `PATCH /admin/reservations/{id}/status`.
 
+## Screenshots
+
+| Screen | Preview | Caption                                                                                                                                                           |
+| --- | --- |-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Booking Wizard - Step 1 | ![Booking Wizard Step 1](docs/images/1-booking-step1-room-selection.png) | Select a building and room to start a new reservation.                                                                                                            |
+| Booking Wizard - Step 2 | ![Booking Wizard Step 2](docs/images/2-booking-step2-time-selection.png) | Choose date and time for the selected room.                                                                                                                       |
+| Booking Wizard - Step 3 | ![Booking Wizard Step 3](docs/images/3-booking-step3-confirmation.png) | Confirm reservation details before final booking.                                                                                                                 |
+| Rooms Explorer | ![Rooms Explorer](docs/images/4-rooms-explorer.png) | Search, filter, and sort rooms with availability status.                                                                                                          |
+| Room Details Panel | ![Room Details Panel](docs/images/5-room-details-panel.png) | Inspect selected room details and current booking window.                                                                                                         |
+| My Bookings - List | ![My Bookings List](docs/images/6-my-bookings-list.png) | View all reservations for the user account.                                                                                                                       |
+| My Bookings - PIN and QR | ![My Bookings PIN QR](docs/images/7-my-bookings-pin-qr.png) | Display PIN and QR access data for check-in.                                                                                                                      |
+| Moderator Dashboard | ![Moderator Dashboard](docs/images/8-moderator-room-and-reservation-management.png) | Manage rooms and reservations from one admin panel: add, rename, and delete rooms, review all bookings, and update reservation statuses |
+
+
 ---
 ## Author
 **Norbert Fila** 257185  
