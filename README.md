@@ -29,20 +29,53 @@ Role and active user ID can be toggled directly in the UI.
 ## Quick start
 
 ### Requirements
-- Node.js
-- Docker Desktop
+- Node.js `>=20`
+- npm
+- Docker Desktop (optional, only for Docker setup)
 
-### 1) Environment setup
-Before starting, create the `.env` file required by the backend to connect to the database:
-You can do this by manually copying the content of .env.example into a new file named .env
+### 1) Environment variables (.env)
+Before starting, create `backend/.env` based on `backend/.env.example`.
 
-### 2) Start backend (Docker)
+macOS/Linux:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Windows (PowerShell):
+
+```powershell
+Copy-Item backend/.env.example backend/.env
+```
+
+Default value:
+
+```env
+DATABASE_URL="file:../dev.db"
+```
+
+This file is required for local backend startup (`npm run dev`).
+
+### 2) Start backend
+
+#### Option A: Docker (backend only)
 ```bash
 cd devenv/compose
 docker compose up --build
 ```
 
-### 3) Start frontend (Local)
+Backend API will be available on `http://localhost:3001`.
+
+#### Option B: Local backend (no Docker)
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+On startup, backend runs Prisma generate + schema push + seed automatically (`predev`).
+
+### 3) Start frontend (local)
 ```bash
 cd frontend
 npm install
@@ -51,31 +84,38 @@ npm run dev
 
 Then open `http://localhost:5173` in your browser.
 
-## Local setup (No Docker)
-If you prefer to run everything locally without Docker:
-
-```bash
-# Terminal 1: Backend
-cd backend
-npm install
-npm run dev
-
-# Terminal 2: Frontend
-cd frontend
-npm install
-npm run dev
-```
-
 ## Troubleshooting
-- **Database issues**
-  - Stop the backend, delete `backend/dev.db`, and restart `npm run dev` to recreate and re-seed the database.
+- **Missing `.env` / backend fails on startup**
+  - Ensure `backend/.env` exists and contains `DATABASE_URL`.
+  - Recreate from template: `cp backend/.env.example backend/.env`.
+
+- **Database issues (local backend)**
+  - Stop backend, delete `backend/dev.db`, then run `npm run dev` again in `backend`.
+  - Schema and seed will be recreated automatically.
+
+- **Docker backend data reset**
+  - Stop containers and remove the volume (`backend_data`) if you need a clean DB state.
+
 - **Ports already in use**
-  - Ensure ports 3001 (Backend API) and 5173 (Frontend) are available.
+  - Ensure ports `3001` (Backend API) and `5173` (Frontend) are available.
+
+- **Frontend cannot reach backend**
+  - Confirm backend is running at `http://localhost:3001`.
+  - Confirm frontend is running at `http://localhost:5173`.
 
 ## Data and persistence
-- On backend startup (`npm run dev`), the Prisma schema is pushed to a local SQLite database (`backend/dev.db`).
-- The database is automatically seeded with initial campus buildings, rooms, and sample reservations via `backend/prisma/seed.ts`.
-- Changes made in the app (new bookings, renamed rooms) are persisted in the local SQLite file.
+- **Local backend**: on `npm run dev`, Prisma schema is pushed and seed is executed automatically.
+- Local SQLite file is `backend/dev.db` (based on current `.env` template).
+- Seed data includes campus buildings and generated rooms (`backend/prisma/seed.ts`).
+- App changes (reservations, room updates) are persisted in SQLite.
+
+- **Docker backend**: database is stored in Docker volume `backend_data` and survives container restarts.
+
+## API notes
+- The frontend fetches campus buildings from backend endpoint `GET /buildings`.
+- Room availability is fetched from `GET /rooms/available`.
+- Admin room management uses `GET/POST/PATCH/DELETE /admin/rooms`.
+- Reservation moderation uses `GET /admin/reservations` and `PATCH /admin/reservations/{id}/status`.
 
 ---
 ## Author
